@@ -3,6 +3,14 @@
 
 using namespace std;
 
+typedef struct sPoint
+{
+	int x;
+	int y;
+} point;
+
+class cUser;
+
 class cMaze
 {
 public:
@@ -11,21 +19,24 @@ public:
 		this->xSize = xSize;
 		this->ySize = ySize;
 		vecMaze.resize(xSize * ySize);
-
 		initMaze();
+		createRandomMaze(20, 50000);
+		nBoxSize = 800 / xSize;
 	}
+
+public:
+	int nBoxSize;
+	vector<int> vecMaze;
 
 private:
 	int xSize;
 	int ySize;
-	vector<int> vecMaze;
-	int nBoxSize = 20;
 	enum BlockType { FREE, BORDER, WALL, START, END, LOOP };
 	enum Direction { NORTH, WEST, SOUTH, EAST };
 	int nlengthCorridor = 0;
 	int nTries = 0;
 
-private:
+public:
 	int getIndex(int x, int y)
 	{
 		return (ySize * x + y);
@@ -53,8 +64,8 @@ public:
 		this->nTries = nTries;
 
 		bool isFirst = true;
-		srand(time(0));
-		
+		srand((int)time(0));
+
 		initMaze();
 
 		while (nTries > 0)
@@ -102,7 +113,7 @@ public:
 
 			// try to create a corridor with a certain random length. start with the FREE selected block
 			// in a alredy existing corridor.
-			for (int c = 0; c < nlengthCorridor/2 +  rand() % (nlengthCorridor/2); c++)
+			for (int c = 0; c < nlengthCorridor / 2 + rand() % (nlengthCorridor / 2); c++)
 			{
 				// navigate to the next block
 				x += dx;
@@ -118,7 +129,7 @@ public:
 					if (vecMaze.at(getIndex(x, y + dy)) != FREE
 						&& vecMaze.at(getIndex(x - 1, y + dy)) != FREE
 						&& vecMaze.at(getIndex(x + 1, y + dy)) != FREE
-						&& vecMaze.at(getIndex(x - 1, y)) != FREE 
+						&& vecMaze.at(getIndex(x - 1, y)) != FREE
 						&& vecMaze.at(getIndex(x + 1, y)) != FREE)
 						vecMaze.at(getIndex(x, y)) = FREE;
 					else
@@ -126,10 +137,10 @@ public:
 				}
 				else if (direction == WEST || direction == EAST)
 				{
-					if (vecMaze.at(getIndex(x + dx, y)) != FREE 
+					if (vecMaze.at(getIndex(x + dx, y)) != FREE
 						&& vecMaze.at(getIndex(x + dx, y - 1)) != FREE
 						&& vecMaze.at(getIndex(x + dx, y + 1)) != FREE
-						&& vecMaze.at(getIndex(x, y - 1)) != FREE 
+						&& vecMaze.at(getIndex(x, y - 1)) != FREE
 						&& vecMaze.at(getIndex(x, y + 1)) != FREE)
 						vecMaze.at(getIndex(x, y)) = FREE;
 					else
@@ -139,7 +150,7 @@ public:
 		}
 
 		// create rooms
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < xSize * ySize / 100; i++)
 		{
 			int xp = rand() % (xSize - 2) + 1;
 			int yp = rand() % (ySize - 2) + 1;
@@ -160,34 +171,21 @@ public:
 		}
 
 		// create loops in the maze. therefore more than one solution exists.
-		int i = 50;
+		int i = xSize * ySize / 100;
 		while (i > 0)
 		{
 			int x = rand() % (xSize - 2) + 1;
 			int y = rand() % (ySize - 2) + 1;
 
 			if (vecMaze.at(getIndex(x, y)) == WALL
-				&& vecMaze.at(getIndex(x + 1, y)) == vecMaze.at(getIndex(x - 1, y)) 
+				&& vecMaze.at(getIndex(x + 1, y)) == vecMaze.at(getIndex(x - 1, y))
 				&& vecMaze.at(getIndex(x, y + 1)) == vecMaze.at(getIndex(x, y - 1)))
 			{
 				if (vecMaze.at(getIndex(x + 1, y)) != vecMaze.at(getIndex(x, y + 1)))
 				{
-					vecMaze.at(getIndex(x, y)) = LOOP;
+					// vecMaze.at(getIndex(x, y)) = LOOP;
 					i--;
 				}
-			}
-		}
-
-		// set start point
-		while (true)
-		{
-			int x = rand() % (xSize - 2) + 1;
-			int y = rand() % (ySize - 2) + 1;
-
-			if (vecMaze.at(getIndex(x, y)) == FREE)
-			{
-				vecMaze.at(getIndex(x, y)) = START;
-				break;
 			}
 		}
 
@@ -206,12 +204,50 @@ public:
 	}
 
 public:
+	void updateMaze(point p, int bt)
+	{
+		vecMaze.at(getIndex(p.x, p.y)) = bt;
+	}
+
+public:
+	point getRandomFreePoint()
+	{
+		int x;
+		int y;
+
+		while (true)
+		{
+			x = rand() % (xSize - 2) + 1;
+			y = rand() % (ySize - 2) + 1;
+
+			if (vecMaze.at(getIndex(x, y)) == FREE)
+			{
+				break;
+			}
+		}
+		return point{ x, y };
+	}
+
+public:
+	bool isFree(int x, int y)
+	{
+		if (vecMaze.at(getIndex(x, y)) == FREE)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+public:
 	void Draw(olc::PixelGameEngine *engine)
 	{
 		for (int x = 0; x < xSize; x++)
 		{
 			for (int y = 0; y < ySize; y++)
-			{
+			{ 
 				if (vecMaze.at(getIndex(x, y)) == BORDER)
 					engine->FillRect(x * nBoxSize, y * nBoxSize, nBoxSize, nBoxSize, olc::DARK_GREY);
 				else if (vecMaze.at(getIndex(x, y)) == WALL)
@@ -231,15 +267,145 @@ public:
 				else if (vecMaze.at(getIndex(x, y)) == LOOP)
 				{
 					engine->FillRect(x * nBoxSize, y * nBoxSize, nBoxSize, nBoxSize, olc::WHITE);
-					//engine->FillCircle(x * nBoxSize + nBoxSize / 2, y * nBoxSize + nBoxSize / 2, nBoxSize / 2, olc::YELLOW);
+					engine->FillCircle(x * nBoxSize + nBoxSize / 2, y * nBoxSize + nBoxSize / 2, nBoxSize / 4, olc::YELLOW);
 				}
 			}
 		}
-		engine->FillRect(1510, 90, 200, 150, olc::WHITE);
-		engine->DrawString(1520, 100, to_string(nlengthCorridor), olc::BLACK, 2);
-		engine->DrawString(1520, 150, to_string(nTries), olc::BLACK, 2);
-		engine->DrawString(1520, 200, to_string(time(0)), olc::BLACK, 2);
+	}
+};
 
+class cUser
+{
+public:
+	cUser(cMaze *maze)
+	{
+		this->maze = maze;
+		p = maze->getRandomFreePoint();
+		// center the user's position into the middle of the square
+		fxPos = (float)p.x + 0.5f;
+		fyPos = (float)p.y + 0.5f;
+		fxPosOld = fxPos;
+		fyPosOld = fyPos;
+	}
+
+private:
+	point p;
+	float fxPos;
+	float fyPos;
+	float fxPosOld;
+	float fyPosOld;
+	float fxVec;
+	float fyVec;
+	float fAngle = 0;
+	float fUserSize = 0.4f;
+	cMaze *maze;
+	
+public:
+	float getAngle() { return fAngle; }
+	float getxPos() { return fxPos; }
+	float getyPos() { return fyPos; }
+
+public:
+	void setRandomPosition()
+	{
+		p = maze->getRandomFreePoint();
+		fxPos = (float)p.x + 0.5f;
+		fyPos = (float)p.y + 0.5f;
+		fxPosOld = fxPos;
+		fyPosOld = fyPos;
+	}
+
+public:
+	void rotate(float fDelta) { fAngle += fDelta; }
+
+	void move(float fDistance)
+	{
+		fxPosOld = fxPos;
+		fyPosOld = fyPos;
+		fxPos += fxVec * fDistance;
+		fyPos += fyVec * fDistance;
+
+		float xv = 0;
+		float yv = 0;
+
+		//collision detection
+		for (float theta = 0; theta < 2 * 3.14159f; theta += 0.1f)
+		{
+			xv = cosf(theta) * fUserSize;
+			yv = sinf(theta) * fUserSize;
+			if (!maze->isFree((int)(fxPos + xv), (int)(fyPos + yv)))
+			{
+				fxPos = fxPosOld;
+				fyPos = fyPosOld;
+				break;
+			}
+		}
+	}
+
+public:
+	void draw2D(olc::PixelGameEngine *engine)
+	{
+		fxVec = cosf(fAngle) * (maze->nBoxSize * fUserSize);
+		fyVec = sinf(fAngle) * (maze->nBoxSize * fUserSize);
+		int xp = (int)(fxPos * (float)maze->nBoxSize);
+		int yp = (int)(fyPos * (float)maze->nBoxSize);
+		//int xpOld = (int)((fxPosOld - fUserSize) * (float)maze->nBoxSize);
+		//int ypOld = (int)((fyPosOld - fUserSize) * (float)maze->nBoxSize);
+		int xpOld = (int)(fxPosOld * (float)maze->nBoxSize);
+		int ypOld = (int)(fyPosOld * (float)maze->nBoxSize);
+		int nBoxSize = int(fUserSize * maze->nBoxSize * 2 + 1);
+
+		// engine->FillRect(xpOld, ypOld, nBoxSize, nBoxSize, olc::WHITE);
+
+		engine->FillCircle(xpOld, ypOld, int(fUserSize * maze->nBoxSize), olc::WHITE);
+		engine->FillCircle(xp, yp, int(fUserSize * maze->nBoxSize), olc::DARK_MAGENTA);
+		engine->DrawLine(xp, yp, int(xp + fxVec), (int)(yp + fyVec), olc::WHITE);
+
+	}
+
+public:
+	void draw3D(olc::PixelGameEngine *engine, cMaze *maze)
+	{
+		int nScreenWidth = 600;
+		float fFOV = 3.14159f / 4.0f;
+		float fDepth = 15.0f;
+		int nXoffset = 1000;
+
+		engine->FillRect(nXoffset, 50, nScreenWidth, nScreenWidth, olc::YELLOW);
+
+		for (int x = 0; x < nScreenWidth; x++)
+		{
+			// calculate the projected ray angle 
+			float fRayAngle = (fAngle - fFOV / 2.0f) + ((float)x / (float)nScreenWidth) * fFOV;
+			// find distance to wall
+			float fStepSize = 0.1f;
+			float fDistanceToWall = 0.0f;
+
+			bool bHitWall = false;
+			bool bBoundary = false;
+
+			float fEyeX = cosf(fRayAngle);
+			float fEyeY = sinf(fRayAngle);
+
+			while (!bHitWall && fDistanceToWall < fDepth)
+			{
+				fDistanceToWall += fStepSize;
+				int nTestX = (int)(fxPos + fEyeX * fDistanceToWall);
+				int nTestY = (int)(fyPos + fEyeY * fDistanceToWall);
+
+				if (maze->vecMaze.at(maze->getIndex(nTestX, nTestY)) != 0)
+				{
+					bHitWall = true;
+
+				}
+			}
+
+			int nShadow = 255 - fDistanceToWall * 20;
+			int yOffset = nScreenWidth / 10 * fDistanceToWall / 2;
+			if (nShadow < 0)
+				nShadow = 0;
+			engine->DrawLine(x + nXoffset, 50 + yOffset, x + nXoffset, 50 + nScreenWidth - yOffset, olc::Pixel(nShadow, nShadow, nShadow));
+		}
 	}
 };
 
@@ -254,7 +420,11 @@ public:
 private:
 	int nlengthCorridor = 50;
 	int nTries = 50000;
-	cMaze maze = cMaze(75, 45);
+	//cMaze maze = cMaze(75, 45);
+	//cMaze maze = cMaze(25, 15);
+	cMaze maze = cMaze(30, 30);
+	cUser user = cUser(&maze);
+	float fAngle = 0;
 
 public:
 	bool OnUserCreate() override
@@ -263,6 +433,8 @@ public:
 		//maze.createRandomMaze(50, 1749);
 		maze.createRandomMaze(nlengthCorridor, nTries);
 		maze.Draw(this);
+		user.draw2D(this);
+		user.draw3D(this, &maze);
 
 		return true;
 	}
@@ -274,42 +446,59 @@ public:
 		if (GetKey(olc::Key::N).bReleased)
 		{
 			maze.createRandomMaze(nlengthCorridor, nTries);
+			user.setRandomPosition();
 			maze.Draw(this);
-		}
-		if (GetKey(olc::Key::A).bReleased)
-		{
-			nlengthCorridor -= 5;
-			if (nlengthCorridor < 5)
-				nlengthCorridor = 5;
-			maze.createRandomMaze(nlengthCorridor, nTries);
-			maze.Draw(this);
+			user.draw2D(this);
+			user.draw3D(this, &maze);
 		}
 
-		if (GetKey(olc::Key::S).bReleased)
+		if (GetKey(olc::Key::R).bReleased)
 		{
-			nlengthCorridor += 5;
-			if (nlengthCorridor > 200)
-				nlengthCorridor = 200;
-			maze.createRandomMaze(nlengthCorridor, nTries);
-			maze.Draw(this);
+			user.setRandomPosition();
+			user.draw2D(this);
 		}
 
-		if (GetKey(olc::Key::Z).bHeld)
+		// User Navigation
+		if (GetKey(olc::Key::A).bHeld)
 		{
-			nTries -= 200;
-			if (nTries < 200)
-				nTries = 200;
-			maze.createRandomMaze(nlengthCorridor, nTries);
-			maze.Draw(this);
+			user.rotate(-4.0f * fElapsedTime);
+			user.draw2D(this);
+			user.draw3D(this, &maze);
+		}
+		if (GetKey(olc::Key::D).bHeld)
+		{
+			user.rotate(4.0f * fElapsedTime);
+			user.draw2D(this);
+			user.draw3D(this, &maze);
+
+		}
+		if (GetKey(olc::Key::W).bHeld)
+		{
+			user.move(0.3f * fElapsedTime);
+			user.draw2D(this);
+			user.draw3D(this, &maze);
+
+		}
+		if (GetKey(olc::Key::S).bHeld)
+		{
+			user.move(-0.3f * fElapsedTime);
+			user.draw2D(this);
+			user.draw3D(this, &maze);
+
 		}
 
-		if (GetKey(olc::Key::X).bHeld)
+
+		if (GetKey(olc::Key::M).bHeld)
 		{
-			nTries += 200;
-			if (nTries > 100000)
-				nTries = 100000;
-			maze.createRandomMaze(nlengthCorridor, nTries);
-			maze.Draw(this);
+
+			float fxVec = sinf(fAngle) * 40;
+			float fyVec = cosf(fAngle) * 40;
+			DrawLine(1300, 500, 1300 + (int)fxVec, 500 + (int)fyVec, olc::YELLOW);
+			fAngle += 0.1f;
+			fxVec = sinf(fAngle) * 40;
+			fyVec = cosf(fAngle) * 40;
+			DrawLine(1300, 500, 1300 + (int)fxVec, 500 + (int)fyVec, olc::BLACK);
+
 		}
 
 		return true;
