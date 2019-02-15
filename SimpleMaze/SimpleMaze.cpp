@@ -244,6 +244,7 @@ public:
 public:
 	void Draw(olc::PixelGameEngine *engine)
 	{
+		engine->FillRect(0, 0, 800, 800, olc::YELLOW);
 		for (int x = 0; x < xSize; x++)
 		{
 			for (int y = 0; y < ySize; y++)
@@ -484,9 +485,9 @@ public:
 private:
 	int nlengthCorridor = 50;
 	int nTries = 50000;
-	//cMaze maze = cMaze(75, 45);
-	//cMaze maze = cMaze(25, 15);
-	cMaze maze = cMaze(25, 25);
+	int nMazeWidth = 25;
+	int nMazeHeight = 25;
+	cMaze maze = cMaze(nMazeWidth, nMazeHeight);
 	cUser user = cUser(&maze);
 	float fAngle = 0;
 
@@ -506,7 +507,8 @@ public:
 public:
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-		// set type of game
+
+		// new game
 		if (GetKey(olc::Key::N).bReleased)
 		{
 			maze.createRandomMaze(nlengthCorridor, nTries);
@@ -515,6 +517,29 @@ public:
 			user.draw2D(this);
 			user.draw3D(this, &maze);
 		}
+		if (GetKey(olc::Key::V).bReleased)
+		{
+			nMazeHeight++;
+			nMazeWidth++;
+			maze = cMaze(nMazeWidth, nMazeHeight);
+			maze.createRandomMaze(nlengthCorridor, nTries);
+			user.setRandomPosition();
+			maze.Draw(this);
+			user.draw2D(this);
+			user.draw3D(this, &maze);
+		}
+		if (GetKey(olc::Key::B).bReleased)
+		{
+			nMazeHeight--;
+			nMazeWidth--;
+			maze = cMaze(nMazeWidth, nMazeHeight);
+			maze.createRandomMaze(nlengthCorridor, nTries);
+			user.setRandomPosition();
+			maze.Draw(this);
+			user.draw2D(this);
+			user.draw3D(this, &maze);
+		}
+
 
 		if (GetKey(olc::Key::R).bReleased)
 		{
