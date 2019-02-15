@@ -18,6 +18,9 @@
     <ClInclude Include="olcPixelGameEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cMaze.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SimpleMaze.cpp">

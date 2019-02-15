@@ -27,6 +27,7 @@ public:
 public:
 	int nBoxSize;
 	vector<int> vecMaze;
+	vector<pair<int, int>> vecGridPath;
 
 private:
 	int xSize;
@@ -50,9 +51,9 @@ private:
 			for (int y = 0; y < ySize; y++)
 			{
 				if (x == 0 || x == xSize - 1 || y == 0 || y == ySize - 1)
-					vecMaze.at(getIndex(x, y)) = BORDER;
+					vecMaze[getIndex(x, y)] = BORDER;
 				else
-					vecMaze.at(getIndex(x, y)) = WALL;
+					vecMaze[getIndex(x, y)] = WALL;
 			}
 		}
 	}
@@ -80,12 +81,12 @@ public:
 			// in the first iteration force to use a wall as starting point
 			if (isFirst)
 			{
-				vecMaze.at(getIndex(x, y)) = FREE;
+				vecMaze[getIndex(x, y)] = FREE;
 				isFirst = false;
 			}
 			else
 			{
-				if (vecMaze.at(getIndex(x, y)) != FREE)
+				if (vecMaze[getIndex(x, y)] != FREE)
 					continue;
 			}
 
@@ -120,29 +121,29 @@ public:
 				y += dy;
 
 				// hitting the border?
-				if (vecMaze.at(getIndex(x, y)) == BORDER)
+				if (vecMaze[getIndex(x, y)] == BORDER)
 					break;
 
 				// do not get in contact with already FREE blocks (other corridors)
 				if (direction == NORTH || direction == SOUTH)
 				{
-					if (vecMaze.at(getIndex(x, y + dy)) != FREE
-						&& vecMaze.at(getIndex(x - 1, y + dy)) != FREE
-						&& vecMaze.at(getIndex(x + 1, y + dy)) != FREE
-						&& vecMaze.at(getIndex(x - 1, y)) != FREE
-						&& vecMaze.at(getIndex(x + 1, y)) != FREE)
-						vecMaze.at(getIndex(x, y)) = FREE;
+					if (vecMaze[getIndex(x, y + dy)] != FREE
+						&& vecMaze[getIndex(x - 1, y + dy)] != FREE
+						&& vecMaze[getIndex(x + 1, y + dy)] != FREE
+						&& vecMaze[getIndex(x - 1, y)] != FREE
+						&& vecMaze[getIndex(x + 1, y)] != FREE)
+						vecMaze[getIndex(x, y)] = FREE;
 					else
 						break;
 				}
 				else if (direction == WEST || direction == EAST)
 				{
-					if (vecMaze.at(getIndex(x + dx, y)) != FREE
-						&& vecMaze.at(getIndex(x + dx, y - 1)) != FREE
-						&& vecMaze.at(getIndex(x + dx, y + 1)) != FREE
-						&& vecMaze.at(getIndex(x, y - 1)) != FREE
-						&& vecMaze.at(getIndex(x, y + 1)) != FREE)
-						vecMaze.at(getIndex(x, y)) = FREE;
+					if (vecMaze[getIndex(x + dx, y)] != FREE
+						&& vecMaze[getIndex(x + dx, y - 1)] != FREE
+						&& vecMaze[getIndex(x + dx, y + 1)] != FREE
+						&& vecMaze[getIndex(x, y - 1)] != FREE
+						&& vecMaze[getIndex(x, y + 1)] != FREE)
+						vecMaze[getIndex(x, y)] = FREE;
 					else
 						break;
 				}
@@ -156,13 +157,13 @@ public:
 			int x = rand() % (xSize - 2) + 1;
 			int y = rand() % (ySize - 2) + 1;
 
-			if (vecMaze.at(getIndex(x, y)) == WALL
-				&& vecMaze.at(getIndex(x + 1, y)) == vecMaze.at(getIndex(x - 1, y))
-				&& vecMaze.at(getIndex(x, y + 1)) == vecMaze.at(getIndex(x, y - 1)))
+			if (vecMaze[getIndex(x, y)] == WALL
+				&& vecMaze[getIndex(x + 1, y)] == vecMaze[getIndex(x - 1, y)]
+				&& vecMaze[getIndex(x, y + 1)] == vecMaze[getIndex(x, y - 1)])
 			{
-				if (vecMaze.at(getIndex(x + 1, y)) != vecMaze.at(getIndex(x, y + 1)))
+				if (vecMaze[getIndex(x + 1, y)] != vecMaze[getIndex(x, y + 1)])
 				{
-					// vecMaze.at(getIndex(x, y)) = LOOP;
+					// vecMaze[getIndex(x, y)] = LOOP;
 					i--;
 				}
 			}
@@ -183,8 +184,8 @@ public:
 			{
 				for (int y = yp; y < yp + yHeight; y++)
 				{
-					if (vecMaze.at(getIndex(x, y)) != BORDER)
-						vecMaze.at(getIndex(x, y)) = FREE;
+					if (vecMaze[getIndex(x, y)] != BORDER)
+						vecMaze[getIndex(x, y)] = FREE;
 				}
 			}
 		}
@@ -195,9 +196,9 @@ public:
 			int x = rand() % (xSize - 2) + 1;
 			int y = rand() % (ySize - 2) + 1;
 
-			if (vecMaze.at(getIndex(x, y)) == FREE)
+			if (vecMaze[getIndex(x, y)] == FREE)
 			{
-				vecMaze.at(getIndex(x, y)) = END;
+				vecMaze[getIndex(x, y)] = END;
 				break;
 			}
 		}
@@ -206,7 +207,7 @@ public:
 public:
 	void updateMaze(point p, int bt)
 	{
-		vecMaze.at(getIndex(p.x, p.y)) = bt;
+		vecMaze[getIndex(p.x, p.y)] = bt;
 	}
 
 public:
@@ -220,7 +221,7 @@ public:
 			x = rand() % (xSize - 2) + 1;
 			y = rand() % (ySize - 2) + 1;
 
-			if (vecMaze.at(getIndex(x, y)) == FREE)
+			if (vecMaze[getIndex(x, y)] == FREE)
 			{
 				break;
 			}
@@ -231,7 +232,7 @@ public:
 public:
 	bool isFree(int x, int y)
 	{
-		if (vecMaze.at(getIndex(x, y)) == FREE)
+		if (vecMaze[getIndex(x, y)] == FREE)
 		{
 			return true;
 		}
@@ -249,23 +250,23 @@ public:
 		{
 			for (int y = 0; y < ySize; y++)
 			{ 
-				if (vecMaze.at(getIndex(x, y)) == BORDER)
+				if (vecMaze[getIndex(x, y)] == BORDER)
 					engine->FillRect(x * nBoxSize, y * nBoxSize, nBoxSize, nBoxSize, olc::DARK_GREY);
-				else if (vecMaze.at(getIndex(x, y)) == WALL)
+				else if (vecMaze[getIndex(x, y)] == WALL)
 					engine->FillRect(x * nBoxSize, y * nBoxSize, nBoxSize, nBoxSize, olc::BLACK);
-				else if (vecMaze.at(getIndex(x, y)) == FREE)
+				else if (vecMaze[getIndex(x, y)] == FREE)
 					engine->FillRect(x * nBoxSize, y * nBoxSize, nBoxSize, nBoxSize, olc::WHITE);
-				else if (vecMaze.at(getIndex(x, y)) == START)
+				else if (vecMaze[getIndex(x, y)] == START)
 				{
 					engine->FillRect(x * nBoxSize, y * nBoxSize, nBoxSize, nBoxSize, olc::WHITE);
 					engine->FillCircle(x * nBoxSize + nBoxSize / 2, y * nBoxSize + nBoxSize / 2, nBoxSize / 2, olc::GREEN);
 				}
-				else if (vecMaze.at(getIndex(x, y)) == END)
+				else if (vecMaze[getIndex(x, y)] == END)
 				{
 					engine->FillRect(x * nBoxSize, y * nBoxSize, nBoxSize, nBoxSize, olc::WHITE);
 					engine->FillCircle(x * nBoxSize + nBoxSize / 2, y * nBoxSize + nBoxSize / 2, nBoxSize / 2, olc::RED);
 				}
-				else if (vecMaze.at(getIndex(x, y)) == LOOP)
+				else if (vecMaze[getIndex(x, y)] == LOOP)
 				{
 					engine->FillRect(x * nBoxSize, y * nBoxSize, nBoxSize, nBoxSize, olc::WHITE);
 					engine->FillCircle(x * nBoxSize + nBoxSize / 2, y * nBoxSize + nBoxSize / 2, nBoxSize / 4, olc::YELLOW);
@@ -273,6 +274,13 @@ public:
 			}
 		}
 	}
+
+public:
+	void getGridPath()
+	{
+
+	}
+
 };
 
 
@@ -445,7 +453,7 @@ public:
 				int nTestX = (int)(fxPos + fEyeX * fDistanceToWall);
 				int nTestY = (int)(fyPos + fEyeY * fDistanceToWall);
 
-				if (maze->vecMaze.at(maze->getIndex(nTestX, nTestY)) != 0)
+				if (maze->vecMaze[maze->getIndex(nTestX, nTestY)] != 0)
 				{
 					if (fStepSize < 0.01f)
 						bHitWall = true;
@@ -457,7 +465,7 @@ public:
 				}
 			}
 
-			int nShadow = 255 - fDistanceToWall * 20;
+			int nShadow = 255 - fDistanceToWall * 15;
 			if (nShadow < 0)
 				nShadow = 0;
 
