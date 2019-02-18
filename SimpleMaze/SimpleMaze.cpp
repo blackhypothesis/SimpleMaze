@@ -12,13 +12,46 @@ typedef struct sPoint
 	int y;
 } point;
 
-typedef struct sLocation
+class cBlock
+{
+public:
+	cBlock()
+	{
+		bTransparent = false;
+		eBlockType = FREE;
+	}
+
+private:
+	bool bTransparent;
+	BlockType eBlockType;
+
+public:
+	bool getTransparent() { return bTransparent; }
+	int getBlockType() { return eBlockType; }
+
+};
+
+typedef struct sPath
 {
 	float x;
 	float y;
-} location;
+	float angle;
+} path;
 
 class cUser;
+
+void drawBGandString(olc::PixelGameEngine *engine, int x, int y, string s, olc::Pixel p)
+{
+	int deltaX = 800;
+	int deltaY = 650;
+	int fontSize = 34;
+
+	int xpos = deltaX + x * fontSize;
+	int ypos = deltaY + y * fontSize;
+
+	engine->FillRect(xpos, ypos, (s.length() + 2) * fontSize, fontSize, olc::WHITE);
+	engine->DrawString(xpos + 2, ypos + 2, s, p, 4);
+}
 
 class cMaze
 {
@@ -29,8 +62,15 @@ public:
 		this->ySize = ySize;
 		vecMaze.resize(xSize * ySize);
 		initMaze();
-		createRandomMaze(20, 50000);
-		nBoxSize = 800 / xSize;
+		createRandomMaze(100, 10000);
+		if (xDraw / xSize < yDraw / ySize)
+		{
+			nBoxSize = xDraw / xSize;
+		}
+		else
+		{
+			nBoxSize = yDraw / ySize;
+		}
 	}
 
 public:
@@ -38,6 +78,8 @@ public:
 	vector<int> vecMaze;
 
 private:
+	int xDraw = 800;
+	int yDraw = 900;
 	int xSize;
 	int ySize;
 	int nlengthCorridor = 0;
@@ -45,7 +87,15 @@ private:
 	olc::Pixel floorColor = olc::DARK_GREEN;
 
 public:
-	int getIndex(int x, int y) { return (ySize * x + y); }
+	point getSize() { return { xSize, ySize }; }
+	int getIndex(int x, int y)
+	{
+		if (xSize * y + x > vecMaze.size())
+		{
+			cout << "error:  ySize = " << ySize << " x = " << x << " y = " << y << "  " << (xSize * y + x) << " > " << vecMaze.size() << endl;
+		}
+		return (xSize * y + x);
+	}
 	int getBlockType(int x, int y) { return vecMaze[getIndex(x, y)]; }
  	olc::Pixel getFloorColor() { return floorColor; }
 	
@@ -54,7 +104,7 @@ public:
 		for (int i = 0; i < vecMaze.size(); i++) {
 			if (vecMaze[i] == END)
 			{
-				return point{ int(i / xSize), i % xSize };
+				return point{ i % xSize, int(i / xSize) };
 			}
 		}
 		return point{ 0, 0 };
@@ -207,18 +257,24 @@ public:
 			}
 		}
 
-		// set randomly some WALL2 blocktype
-
-		i = 20;
-		while (i > 0)
+		// set randomly some areas with WALL2 blocktype
+		for (int i = 0; i < xSize * ySize / 100; i++)
 		{
-			int x = rand() % (xSize - 2) + 1;
-			int y = rand() % (ySize - 2) + 1;
+			int xp = rand() % (xSize - 2) + 1;
+			int yp = rand() % (ySize - 2) + 1;
+			int xWidth = 3 + rand() % 8;
+			int yHeight = 3 + rand() % 8;
 
-			if (vecMaze[getIndex(x, y)] == WALL1)
+			if (xp + xWidth > xSize - 1 || yp + yHeight > ySize - 1)
+				continue;
+
+			for (int x = xp; x < xp + xWidth; x++)
 			{
-				vecMaze[getIndex(x, y)] = WALL2;
-				i--;
+				for (int y = yp; y < yp + yHeight; y++)
+				{
+					if (vecMaze[getIndex(x, y)] == WALL1)
+						vecMaze[getIndex(x, y)] = WALL2;
+				}
 			}
 		}
 		
@@ -256,9 +312,24 @@ public:
 	}
 
 public:
-	void Draw(olc::PixelGameEngine *engine)
+	void drawGrid(olc::PixelGameEngine *engine)
 	{
-		engine->FillRect(0, 0, 800, 800, olc::YELLOW);
+		engine->FillRect(0, 0, xDraw, yDraw, olc::YELLOW);
+		for (int x = 0; x < xSize; x++)
+		{
+			for (int y = 0; y < ySize; y++)
+			{
+				engine->DrawRect(x * nBoxSize, y * nBoxSize, nBoxSize, nBoxSize, olc::GREY);
+				if (vecMaze[getIndex(x, y)] == BORDER)
+					engine->FillRect(x * nBoxSize, y * nBoxSize, nBoxSize, nBoxSize, olc::DARK_GREY);
+			}
+		}
+	}
+
+public:
+	void draw(olc::PixelGameEngine *engine)
+	{
+		engine->FillRect(0, 0, xDraw, yDraw, olc::YELLOW);
 		for (int x = 0; x < xSize; x++)
 		{
 			for (int y = 0; y < ySize; y++)
@@ -311,13 +382,13 @@ private:
 	float fyPos;
 	float fxPosOld;
 	float fyPosOld;
-	float fAngle = 0;  
+	float fAngle = -3.14159 / 2;
 	float fxVec;          // x vector if fAngle
 	float fyVec;          // y vector of fAngle
 	float fx90leftVec;    // sidestep left
 	float fx90rightVec;   // sidestep right
 	float fUserSize = 0.2f;
-	vector<location> vecPath; // save the path the user moved around
+	vector<path> vecPath; // save the path the user moved around
 	cMaze *maze;
 	
 public:
@@ -334,7 +405,7 @@ public:
 		fxPosOld = fxPos;
 		fyPosOld = fyPos;
 		vecPath.clear();
-		vecPath.push_back({ fxPos, fyPos });
+		vecPath.push_back({ fxPos, fyPos, fAngle });
 	}
 
 public:
@@ -343,6 +414,7 @@ public:
 		fAngle += fDelta;
 		fxVec = cosf(fAngle);
 		fyVec = sinf(fAngle);
+		vecPath.push_back({ fxPos, fyPos, fAngle });
 	}
 
 	void move(float fDistance)
@@ -374,7 +446,7 @@ public:
 		}
 		if (fxPos != fxPosOld || fyPos != fyPosOld)
 		{
-			vecPath.push_back({ fxPos, fyPos });
+			vecPath.push_back({ fxPos, fyPos, fAngle });
 		}
 	}
 
@@ -395,7 +467,7 @@ public:
 				fyPos = fyPosOld;
 			}
 			else
-				vecPath.push_back({ fxPos, fyPos });
+				vecPath.push_back({ fxPos, fyPos, fAngle });
 		}
 		else
 		// left shift
@@ -411,7 +483,7 @@ public:
 				fyPos = fyPosOld;
 			}
 			else
-				vecPath.push_back({ fxPos, fyPos });
+				vecPath.push_back({ fxPos, fyPos, fAngle });
 		}
 	}
 
@@ -435,7 +507,7 @@ private:
 	}
 
 public:
-	void draw2dPath(olc::PixelGameEngine *engine)
+	void draw2DPath(olc::PixelGameEngine *engine)
 	{
 		for (auto v : vecPath)
 		{
@@ -449,13 +521,8 @@ public:
 	{
 		int xp = (int)(fxPos * (float)maze->nBoxSize);
 		int yp = (int)(fyPos * (float)maze->nBoxSize);
-		//int xpOld = (int)((fxPosOld - fUserSize) * (float)maze->nBoxSize);
-		//int ypOld = (int)((fyPosOld - fUserSize) * (float)maze->nBoxSize);
 		int xpOld = (int)(fxPosOld * (float)maze->nBoxSize);
 		int ypOld = (int)(fyPosOld * (float)maze->nBoxSize);
-		int nBoxSize = int(fUserSize * maze->nBoxSize * 2 + 1);
-
-		// engine->FillRect(xpOld, ypOld, nBoxSize, nBoxSize, olc::WHITE);
 
 		engine->FillCircle(xpOld, ypOld, int(fUserSize * maze->nBoxSize), maze->getFloorColor());
 		engine->FillCircle(xp, yp, int(fUserSize * maze->nBoxSize), olc::BLUE);
@@ -503,7 +570,9 @@ public:
 				if (maze->vecMaze[maze->getIndex((int)nTestX, (int)nTestY)] != 0)
 				{
 					if (fStepSize < 0.01f)
+					{
 						bHitWall = true;
+					}
 					else
 					{
 						fDistanceToWall -= fStepSize;
@@ -516,10 +585,6 @@ public:
 			if (nShadow < 0)
 				nShadow = 0;
 			olc::Pixel pWall;
-
-			// draw END in different color
-			//if ((int)(nTestX) == pEnd.x && (int)nTestY == pEnd.y)
-			//	pWall = olc::Pixel(0, nShadow, 0);
 
 			switch (maze->getBlockType(int(nTestX), int(nTestY))) {
 				case BORDER: pWall = olc::Pixel(nShadow/2, nShadow/2, nShadow/2); break;
@@ -553,9 +618,19 @@ public:
 	}
 
 public:
-	void replayPath3D() 
+	void replayPath3D(olc::PixelGameEngine *engine, cMaze *maze) 
 	{
-		// tbd
+		float fxPosBackup = fxPos;
+		float fyPosBackup = fyPos;
+		float fAngleBackup = fAngle;
+
+		for (auto v : vecPath)
+		{
+			fxPos = v.x;
+			fyPos = v.y;
+			fAngle = v.angle;
+			draw3D(engine, maze);
+		}
 	}
 
 };
@@ -570,9 +645,9 @@ public:
 
 private:
 	int nlengthCorridor = 100;
-	int nTries = 50000;
-	int nMazeWidth = 25;
-	int nMazeHeight = 25;
+	int nTries = 10000;
+	int nMazeWidth = 16;
+	int nMazeHeight = 18;
 	cMaze maze = cMaze(nMazeWidth, nMazeHeight);
 	cUser user = cUser(&maze);
 	float fAngle = 0;
@@ -580,27 +655,44 @@ private:
 	bool bDraw2D = false;
 	float fDistanceToEnd = 0.0f;
 
+private:
+	void drawParams()
+	{		
+		drawBGandString(this, 0, 0, to_string(maze.getSize().x), olc::RED);
+		drawBGandString(this, 0, 1, to_string(maze.getSize().y), olc::RED);
+		drawBGandString(this, 5, 0, to_string(user.getPos().x), olc::BLUE);
+		drawBGandString(this, 5, 1, to_string(user.getPos().y), olc::BLUE);
+		drawBGandString(this, 10, 0, to_string(maze.getEnd().x), olc::GREEN);
+		drawBGandString(this, 10, 1, to_string(maze.getEnd().y), olc::GREEN);
+		drawBGandString(this, 0, 3, to_string(fDistanceToEnd), olc::BLACK);
+		drawBGandString(this, 0, 4, to_string(user.getPathLength()), olc::BLACK);
+	}
+
 public:
 	bool OnUserCreate() override
 	{
 		FillRect(0, 0, 1699, 899, olc::YELLOW);
-		//maze.createRandomMaze(50, 1749);
 		maze.createRandomMaze(nlengthCorridor, nTries);
+		user.setRandomPosition();
 		user.draw3D(this, &maze);
-
+		maze.drawGrid(this);
+		user.draw2D(this);
+		drawParams();
 		return true;
 	}
 
 public:
 	bool OnUserUpdate(float fElapsedTime) override
 	{
-
 		// draw 2D?
 		if (GetKey(olc::Key::M).bReleased)
 		{
-			bDraw2D = true;
-			maze.Draw(this);
-			user.draw2dPath(this);
+			bDraw2D = !bDraw2D;
+			if (bDraw2D)
+				maze.draw(this);
+			else
+				maze.drawGrid(this);
+			user.draw2DPath(this);
 			user.draw2D(this);
 		}
 		// new game
@@ -610,10 +702,12 @@ public:
 			maze.createRandomMaze(nlengthCorridor, nTries);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
-			FillRect(0, 0, 800, 900, olc::YELLOW);
+			maze.drawGrid(this);
+			user.draw2D(this);
+			drawParams();
 		}
 
-		// grow maze
+		// grow maze x and y
 		if (GetKey(olc::Key::V).bReleased)
 		{
 			bDraw2D = false;
@@ -623,18 +717,54 @@ public:
 			maze.createRandomMaze(nlengthCorridor, nTries);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
+			maze.drawGrid(this);
+			user.draw2D(this);
+			drawParams();
 		}
 
-		//shrink maze
+		//shrink maze x and y
 		if (GetKey(olc::Key::B).bReleased)
 		{
 			bDraw2D = false;
 			nMazeHeight--;
 			nMazeWidth--;
+			if (nMazeHeight < 5) { nMazeHeight = 5; }
+			if (nMazeWidth < 5) { nMazeWidth = 5; }
 			maze = cMaze(nMazeWidth, nMazeHeight);
 			maze.createRandomMaze(nlengthCorridor, nTries);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
+			maze.drawGrid(this);
+			user.draw2D(this);
+			drawParams();
+		}
+
+		// grow maze x
+		if (GetKey(olc::Key::X).bReleased)
+		{
+			bDraw2D = false;
+			nMazeWidth++;
+			maze = cMaze(nMazeWidth, nMazeHeight);
+			maze.createRandomMaze(nlengthCorridor, nTries);
+			user.setRandomPosition();
+			user.draw3D(this, &maze);
+			maze.drawGrid(this);
+			user.draw2D(this);
+			drawParams();
+		}
+
+		// grow maze y
+		if (GetKey(olc::Key::Z).bReleased)
+		{
+			bDraw2D = false;
+			nMazeHeight++;
+			maze = cMaze(nMazeWidth, nMazeHeight);
+			maze.createRandomMaze(nlengthCorridor, nTries);
+			user.setRandomPosition();
+			user.draw3D(this, &maze);
+			maze.drawGrid(this);
+			user.draw2D(this);
+			drawParams();
 		}
 
 		// get distance to end
@@ -644,7 +774,7 @@ public:
 			point pEnd = maze.getEnd();
 			int nDeltaX = pUser.x - pEnd.x;
 			int nDeltaY = pUser.y - pEnd.y;
-			fDistanceToEnd = sqrtf(nDeltaX * nDeltaX + nDeltaY * nDeltaY);
+			fDistanceToEnd = sqrtf((float)(nDeltaX * nDeltaX + nDeltaY * nDeltaY));
 		}
 
 		// User Navigation
@@ -652,13 +782,11 @@ public:
 		if (GetKey(olc::Key::A).bHeld)
 		{
 			user.rotate(-2.0f * fElapsedTime);
-			if (bDraw2D) user.draw2D(this);
 			bUserInteraction = true;
 		}
 		if (GetKey(olc::Key::D).bHeld)
 		{
 			user.rotate(2.0f * fElapsedTime);
-			if (bDraw2D) user.draw2D(this);
 			bUserInteraction = true;
 		}
 
@@ -666,34 +794,30 @@ public:
 		if (GetKey(olc::Key::W).bHeld)
 		{
 			user.move(3.0f * fElapsedTime);
-			if (bDraw2D) user.draw2D(this);
 			bUserInteraction = true;
 		}
 		if (GetKey(olc::Key::S).bHeld)
 		{
 			user.move(-3.0f * fElapsedTime);
-			if (bDraw2D) user.draw2D(this);
 			bUserInteraction = true;
 		}
 
 		// move: shift left - right
 		if (GetKey(olc::Key::P).bHeld)
 		{
-			user.moveSide(-3.0f * fElapsedTime, true);
-			if (bDraw2D) user.draw2D(this);
 			bUserInteraction = true;
+			user.moveSide(-3.0f * fElapsedTime, true);
 		}
 		if (GetKey(olc::Key::I).bHeld)
 		{
-			user.moveSide(-3.0f * fElapsedTime, false);
-			if (bDraw2D) user.draw2D(this);
 			bUserInteraction = true;
+			user.moveSide(-3.0f * fElapsedTime, false);
 		}
 
 		// replay user path in 3D
 		if (GetKey(olc::Key::R).bReleased)
 		{
-			user.replayPath3D();
+			user.replayPath3D(this, &maze);
 		}
 
 		// only draw 3d if user interaction occured
@@ -701,18 +825,15 @@ public:
 		{
 			user.draw3D(this, &maze);
 			user.draw2D(this);
-
+				
 			// draw user angle and position
 			float xVec = cosf(user.getAngle());
 			float yVec = sinf(user.getAngle());
 			FillRect(1250 - 40, 600 - 40, 260, 110, olc::YELLOW);
-			DrawRect(1250 - 40, 600 - 40, 260, 110, olc::BLACK);
 			DrawCircle(1250, 600, 32, olc::DARK_BLUE);
-			DrawLine(1250, 600, 1250 + (int)(xVec * 30), 600 + (int)(yVec * 30), olc::BLACK);
-			DrawString(1300, 590, to_string(user.getPos().x), olc::BLACK, 4);
-			DrawString(1400, 590, to_string(user.getPos().y), olc::BLACK, 4);
-			DrawString(1300, 630, to_string(fDistanceToEnd), olc::BLACK, 2);
-			DrawString(1300, 650, to_string(user.getPathLength()), olc::BLACK, 2);
+			DrawLine(1250, 600, 1250 + xVec * 32, 600 + yVec * 32, olc::DARK_BLUE);
+
+			drawParams();
 			bUserInteraction = false;
 		}
 		return true;
