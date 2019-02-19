@@ -42,14 +42,14 @@ class cUser;
 
 void drawBGandString(olc::PixelGameEngine *engine, int x, int y, string s, olc::Pixel p)
 {
-	int deltaX = 800;
+	int deltaX = 810;
 	int deltaY = 650;
 	int fontSize = 34;
 
 	int xpos = deltaX + x * fontSize;
 	int ypos = deltaY + y * fontSize;
 
-	engine->FillRect(xpos, ypos, (s.length() + 2) * fontSize, fontSize, olc::WHITE);
+	engine->FillRect(xpos, ypos, (s.length() + 2) * fontSize, fontSize, olc::YELLOW);
 	engine->DrawString(xpos + 2, ypos + 2, s, p, 4);
 }
 
@@ -62,7 +62,7 @@ public:
 		this->ySize = ySize;
 		vecMaze.resize(xSize * ySize);
 		initMaze();
-		createRandomMaze(100, 10000);
+		createRandomMaze(100);
 		if (xDraw / xSize < yDraw / ySize)
 		{
 			nBoxSize = xDraw / xSize;
@@ -83,25 +83,17 @@ private:
 	int xSize;
 	int ySize;
 	int nlengthCorridor = 0;
-	int nTries = 0;
 	olc::Pixel floorColor = olc::DARK_GREEN;
 
 public:
-	point getSize() { return { xSize, ySize }; }
-	int getIndex(int x, int y)
-	{
-		if (xSize * y + x > vecMaze.size())
-		{
-			cout << "error:  ySize = " << ySize << " x = " << x << " y = " << y << "  " << (xSize * y + x) << " > " << vecMaze.size() << endl;
-		}
-		return (xSize * y + x);
-	}
-	int getBlockType(int x, int y) { return vecMaze[getIndex(x, y)]; }
- 	olc::Pixel getFloorColor() { return floorColor; }
+	point getSize() const { return { xSize, ySize }; }
+	int getIndex(int x, int y) const {  return (xSize * y + x); }
+	int getBlockType(int x, int y) const { return vecMaze[getIndex(x, y)]; }
+ 	olc::Pixel getFloorColor() const { return floorColor; }
 	
-	point getEnd()
+	point getEnd() const
 	{
-		for (int i = 0; i < vecMaze.size(); i++) {
+		for (int i = 0; i < (int)vecMaze.size(); i++) {
 			if (vecMaze[i] == END)
 			{
 				return point{ i % xSize, int(i / xSize) };
@@ -111,7 +103,7 @@ public:
 	}
 
 public:
-	point getRandomFreePoint()
+	point getRandomFreePoint() const
 	{
 		int x;
 		int y;
@@ -145,19 +137,18 @@ private:
 	}
 
 public:
-	void createRandomMaze(int nlengthCorridor, int nTries)
+	void createRandomMaze(int nlengthCorridor)
 	{
 		this->nlengthCorridor = nlengthCorridor;
-		this->nTries = nTries;
+		int nIterations = xSize * ySize * 5;
 
 		bool isFirst = true;
 		srand((int)time(0));
 
 		initMaze();
 
-		while (nTries > 0)
+		while (nIterations > 0)
 		{
-			nTries--;
 			int x = rand() % (xSize - 2) + 1;
 			int y = rand() % (ySize - 2) + 1;
 			int direction = rand() % 4;
@@ -176,6 +167,8 @@ public:
 					continue;
 			}
 
+			nIterations--;
+			
 			// if the selected block is FREE, calculate the next step according to the direction. 
 			if (direction == NORTH)      { dx = 0; dy = -1; }
 			else if (direction == WEST)  { dx = 1; dy = 0; }
@@ -221,7 +214,7 @@ public:
 		}
 
 		// create loops in the maze. therefore more than one solution exists.
-		int i = xSize * ySize / 100;
+		int i = (int)sqrt(xSize * ySize);
 		while (i > 0)
 		{
 			int x = rand() % (xSize - 2) + 1;
@@ -237,12 +230,12 @@ public:
 		}
 		
 		// create rooms
-		for (int i = 0; i < xSize * ySize / 100; i++)
+		for (int i = 0; i < sqrt(xSize * ySize) / 5; i++)
 		{
 			int xp = rand() % (xSize - 2) + 1;
 			int yp = rand() % (ySize - 2) + 1;
-			int xWidth = 3 + rand() % 8;
-			int yHeight = 3 + rand() % 8;
+			int xWidth = 3 + rand() % (xSize/5);
+			int yHeight = 3 + rand() % (ySize/5);
 
 			if (xp + xWidth > xSize - 1 || yp + yHeight > ySize - 1)
 				continue;
@@ -258,12 +251,12 @@ public:
 		}
 
 		// set randomly some areas with WALL2 blocktype
-		for (int i = 0; i < xSize * ySize / 100; i++)
+		for (int i = 0; i < sqrt(xSize * ySize) / 2; i++)
 		{
 			int xp = rand() % (xSize - 2) + 1;
 			int yp = rand() % (ySize - 2) + 1;
-			int xWidth = 3 + rand() % 8;
-			int yHeight = 3 + rand() % 8;
+			int xWidth = 3 + rand() % (xSize / 5);
+			int yHeight = 3 + rand() % (ySize / 5);
 
 			if (xp + xWidth > xSize - 1 || yp + yHeight > ySize - 1)
 				continue;
@@ -382,7 +375,7 @@ private:
 	float fyPos;
 	float fxPosOld;
 	float fyPosOld;
-	float fAngle = -3.14159 / 2;
+	float fAngle = -3.14159f / 2;
 	float fxVec;          // x vector if fAngle
 	float fyVec;          // y vector of fAngle
 	float fx90leftVec;    // sidestep left
@@ -392,9 +385,9 @@ private:
 	cMaze *maze;
 	
 public:
-	float getAngle() { return fAngle; }
-	point getPos() { return point{ (int)fxPos, (int)fyPos }; }
-	int getPathLength() { return vecPath.size(); }
+	float getAngle() const { return fAngle; }
+	point getPos() const { return point{ (int)fxPos, (int)fyPos }; }
+	int getPathLength() const { return vecPath.size(); }
 
 public:
 	void setRandomPosition()
@@ -646,8 +639,8 @@ public:
 private:
 	int nlengthCorridor = 100;
 	int nTries = 50000;
-	int nMazeWidth = 100;
-	int nMazeHeight = 100;
+	int nMazeWidth = 40;
+	int nMazeHeight = 45;
 	cMaze maze = cMaze(nMazeWidth, nMazeHeight);
 	cUser user = cUser(&maze);
 	float fAngle = 0;
@@ -662,24 +655,24 @@ private:
 private:
 	void drawParams()
 	{		
-		drawBGandString(this, 0, 0, to_string(maze.getSize().x), olc::RED);
-		drawBGandString(this, 0, 1, to_string(maze.getSize().y), olc::RED);
-		drawBGandString(this, 5, 0, to_string(user.getPos().x), olc::BLUE);
-		drawBGandString(this, 5, 1, to_string(user.getPos().y), olc::BLUE);
-		drawBGandString(this, 10, 0, to_string(maze.getEnd().x), olc::GREEN);
-		drawBGandString(this, 10, 1, to_string(maze.getEnd().y), olc::GREEN);
+		drawBGandString(this, 0, 0, to_string(maze.getSize().x), olc::DARK_GREY);
+		drawBGandString(this, 0, 1, to_string(maze.getSize().y), olc::DARK_GREY);
+		drawBGandString(this, 4, 0, to_string(user.getPos().x), olc::BLUE);
+		drawBGandString(this, 4, 1, to_string(user.getPos().y), olc::BLUE);
+		drawBGandString(this, 8, 0, to_string(maze.getEnd().x), olc::GREEN);
+		drawBGandString(this, 8, 1, to_string(maze.getEnd().y), olc::GREEN);
 		drawBGandString(this, 0, 3, to_string(fDistanceToEnd), olc::BLACK);
 		drawBGandString(this, 0, 4, to_string(user.getPathLength()), olc::BLACK);
 
-		drawBGandString(this, 15, 0, to_string(mouseX), olc::BLACK);
-		drawBGandString(this, 15, 1, to_string(mouseY), olc::BLACK);
+		drawBGandString(this, 12, 0, to_string(mouseX), olc::BLACK);
+		drawBGandString(this, 12, 1, to_string(mouseY), olc::BLACK);
 	}
 
 public:
 	bool OnUserCreate() override
 	{
 		FillRect(0, 0, 1699, 899, olc::YELLOW);
-		maze.createRandomMaze(nlengthCorridor, nTries);
+		maze.createRandomMaze(nlengthCorridor);
 		user.setRandomPosition();
 		user.draw3D(this, &maze);
 		maze.drawGrid(this);
@@ -709,7 +702,7 @@ public:
 		if (GetKey(olc::Key::N).bReleased)
 		{
 			bDraw2D = false;
-			maze.createRandomMaze(nlengthCorridor, nTries);
+			maze.createRandomMaze(nlengthCorridor);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
 			maze.drawGrid(this);
@@ -721,10 +714,10 @@ public:
 		if (GetKey(olc::Key::V).bReleased)
 		{
 			bDraw2D = false;
-			nMazeHeight++;
-			nMazeWidth++;
+			nMazeHeight += 10;
+			nMazeWidth += 10;
 			maze = cMaze(nMazeWidth, nMazeHeight);
-			maze.createRandomMaze(nlengthCorridor, nTries);
+			maze.createRandomMaze(nlengthCorridor);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
 			maze.drawGrid(this);
@@ -736,12 +729,12 @@ public:
 		if (GetKey(olc::Key::B).bReleased)
 		{
 			bDraw2D = false;
-			nMazeHeight--;
-			nMazeWidth--;
+			nMazeHeight -= 10;
+			nMazeWidth -= 10;
 			if (nMazeHeight < 5) { nMazeHeight = 5; }
 			if (nMazeWidth < 5) { nMazeWidth = 5; }
 			maze = cMaze(nMazeWidth, nMazeHeight);
-			maze.createRandomMaze(nlengthCorridor, nTries);
+			maze.createRandomMaze(nlengthCorridor);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
 			maze.drawGrid(this);
@@ -755,7 +748,7 @@ public:
 			bDraw2D = false;
 			nMazeWidth++;
 			maze = cMaze(nMazeWidth, nMazeHeight);
-			maze.createRandomMaze(nlengthCorridor, nTries);
+			maze.createRandomMaze(nlengthCorridor);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
 			maze.drawGrid(this);
@@ -769,7 +762,7 @@ public:
 			bDraw2D = false;
 			nMazeHeight++;
 			maze = cMaze(nMazeWidth, nMazeHeight);
-			maze.createRandomMaze(nlengthCorridor, nTries);
+			maze.createRandomMaze(nlengthCorridor);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
 			maze.drawGrid(this);
@@ -853,7 +846,7 @@ public:
 			float yVec = sinf(user.getAngle());
 			FillRect(1250 - 40, 600 - 40, 260, 110, olc::YELLOW);
 			DrawCircle(1250, 600, 32, olc::DARK_BLUE);
-			DrawLine(1250, 600, 1250 + xVec * 32, 600 + yVec * 32, olc::DARK_BLUE);
+			DrawLine(1250, 600, 1250 + (int)(xVec * 32), 600 + (int)(yVec * 32), olc::DARK_BLUE);
 
 			drawParams();
 			bUserInteraction = false;
