@@ -645,15 +645,19 @@ public:
 
 private:
 	int nlengthCorridor = 100;
-	int nTries = 10000;
-	int nMazeWidth = 16;
-	int nMazeHeight = 18;
+	int nTries = 50000;
+	int nMazeWidth = 100;
+	int nMazeHeight = 100;
 	cMaze maze = cMaze(nMazeWidth, nMazeHeight);
 	cUser user = cUser(&maze);
 	float fAngle = 0;
 	bool bUserInteraction = false;
 	bool bDraw2D = false;
 	float fDistanceToEnd = 0.0f;
+	int mouseX = GetMouseX();
+	int mouseY = GetMouseY();
+	int mouseOldX = mouseX;
+	int mouseOldY = mouseY;
 
 private:
 	void drawParams()
@@ -666,6 +670,9 @@ private:
 		drawBGandString(this, 10, 1, to_string(maze.getEnd().y), olc::GREEN);
 		drawBGandString(this, 0, 3, to_string(fDistanceToEnd), olc::BLACK);
 		drawBGandString(this, 0, 4, to_string(user.getPathLength()), olc::BLACK);
+
+		drawBGandString(this, 15, 0, to_string(mouseX), olc::BLACK);
+		drawBGandString(this, 15, 1, to_string(mouseY), olc::BLACK);
 	}
 
 public:
@@ -684,6 +691,9 @@ public:
 public:
 	bool OnUserUpdate(float fElapsedTime) override
 	{
+		mouseX = GetMouseX();
+		mouseY = GetMouseY();
+
 		// draw 2D?
 		if (GetKey(olc::Key::M).bReleased)
 		{
@@ -789,16 +799,28 @@ public:
 			user.rotate(2.0f * fElapsedTime);
 			bUserInteraction = true;
 		}
+		if (mouseX != mouseOldX && mouseX > 820 && mouseX < 1680 && mouseY > 50 && mouseY < 550)
+		{
+			user.rotate(0.3f * fElapsedTime * (mouseX - mouseOldX));
+			mouseOldX = mouseX;
+			bUserInteraction = true;
+		}
 
 		// Move forward - backward
-		if (GetKey(olc::Key::W).bHeld)
+		if (GetKey(olc::Key::W).bHeld || GetMouse(0).bHeld)
 		{
 			user.move(3.0f * fElapsedTime);
 			bUserInteraction = true;
 		}
-		if (GetKey(olc::Key::S).bHeld)
+		if (GetKey(olc::Key::S).bHeld || GetMouse(1).bHeld)
 		{
 			user.move(-3.0f * fElapsedTime);
+			bUserInteraction = true;
+		}
+		if (mouseY != mouseOldY && mouseX > 820 && mouseX < 1680 && mouseY > 50 && mouseY < 550)
+		{
+			user.move(-0.3f * fElapsedTime * (mouseY - mouseOldY));
+			mouseOldY = mouseY;
 			bUserInteraction = true;
 		}
 
