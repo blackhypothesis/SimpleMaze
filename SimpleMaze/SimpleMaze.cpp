@@ -42,8 +42,8 @@ class cUser;
 
 void drawBGandString(olc::PixelGameEngine *engine, int x, int y, string s, olc::Pixel p)
 {
-	int deltaX = 810;
-	int deltaY = 650;
+	int deltaX = 910;
+	int deltaY = 570;
 	int fontSize = 34;
 
 	int xpos = deltaX + x * fontSize;
@@ -412,6 +412,9 @@ public:
 
 	void move(float fDistance)
 	{
+		// restrict fDistance to  -0.5 to 0.5 in order to not jump over boxes and border.
+		if (fDistance > 0.5f) { fDistance = 0.5f; }
+		else if (fDistance < -0.5f) { fDistance = -0.5f; }
 		fxPosOld = fxPos;
 		fyPosOld = fyPos;
 		fxPos += fxVec * fDistance;
@@ -661,8 +664,8 @@ private:
 		drawBGandString(this, 4, 1, to_string(user.getPos().y), olc::BLUE);
 		drawBGandString(this, 8, 0, to_string(maze.getEnd().x), olc::GREEN);
 		drawBGandString(this, 8, 1, to_string(maze.getEnd().y), olc::GREEN);
-		drawBGandString(this, 0, 3, to_string(fDistanceToEnd), olc::BLACK);
-		drawBGandString(this, 0, 4, to_string(user.getPathLength()), olc::BLACK);
+		drawBGandString(this, 0, 2, to_string(fDistanceToEnd), olc::BLACK);
+		drawBGandString(this, 0, 3, to_string(user.getPathLength()), olc::BLACK);
 
 		drawBGandString(this, 12, 0, to_string(mouseX), olc::BLACK);
 		drawBGandString(this, 12, 1, to_string(mouseY), olc::BLACK);
@@ -672,6 +675,16 @@ public:
 	bool OnUserCreate() override
 	{
 		FillRect(0, 0, 1699, 899, olc::YELLOW);
+		{
+			int deltaX = 1100;
+			int deltaY = 700;
+			DrawString(deltaX, deltaY, "[A][S][D][W][I][P]  move", olc::BLACK, 2);
+			DrawString(deltaX, deltaY + 20, "Mouse               move", olc::BLACK, 2);
+			DrawString(deltaX, deltaY + 40, "[M]                 toggle draw 2D", olc::BLACK, 2);
+			DrawString(deltaX, deltaY + 60, "[O]                 distance to end", olc::BLACK, 2);
+			DrawString(deltaX, deltaY + 80, "[X][Y][V]           grow maze", olc::BLACK, 2);
+			DrawString(deltaX, deltaY + 100, "[B]                 shrink maze", olc::BLACK, 2);
+		}
 		maze.createRandomMaze(nlengthCorridor);
 		user.setRandomPosition();
 		user.draw3D(this, &maze);
@@ -844,9 +857,9 @@ public:
 			// draw user angle and position
 			float xVec = cosf(user.getAngle());
 			float yVec = sinf(user.getAngle());
-			FillRect(1250 - 40, 600 - 40, 260, 110, olc::YELLOW);
-			DrawCircle(1250, 600, 32, olc::DARK_BLUE);
-			DrawLine(1250, 600, 1250 + (int)(xVec * 32), 600 + (int)(yVec * 32), olc::DARK_BLUE);
+			FillRect(850 - 40, 600 - 40, 260, 110, olc::YELLOW);
+			DrawCircle(850, 600, 32, olc::DARK_BLUE);
+			DrawLine(850, 600, 850 + (int)(xVec * 32), 600 + (int)(yVec * 32), olc::DARK_BLUE);
 
 			drawParams();
 			bUserInteraction = false;
