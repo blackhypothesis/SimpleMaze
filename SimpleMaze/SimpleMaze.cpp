@@ -77,7 +77,8 @@ private:
 	int yDraw = 900;
 	int xSize;
 	int ySize;
-	int nlengthCorridor = 0;
+	// int nlengthCorridor = 0;
+	bool bFirstCorridor = true;
 	olc::Pixel floorColor = olc::DARK_GREEN;
 
 public:
@@ -127,9 +128,13 @@ public:
 		return point{ x, y };
 	}
 
-private:
+// ------- methods to create maze
+// ------------------------------
+public:
 	void initMaze()
 	{
+		bFirstCorridor = true;
+
 		for (int x = 0; x < xSize; x++)
 		{
 			for (int y = 0; y < ySize; y++)
@@ -143,47 +148,45 @@ private:
 	}
 
 public:
-	void createRandomMaze(int nlengthCorridor)
+	void createCorridor(int nLengthCorridor)
 	{
-		this->nlengthCorridor = nlengthCorridor;
-		int nIterations = xSize * ySize * 5;
+		int x = 0;
+		int y = 0;
+		int dx = 0;
+		int dy = 0;
+		int direction = rand() % 4;
+		int nCurrentLengthCorridor = 0;
+		int nTries = 0;
 
-		bool isFirst = true;
-		srand((int)time(0));
-
-		initMaze();
-
-		while (nIterations > 0)
+		// try nTries times to crate a corridor which is at least 1 block long. 
+		while (nCurrentLengthCorridor < 1 && nTries < xSize * ySize)
 		{
-			int x = rand() % (xSize - 2) + 1;
-			int y = rand() % (ySize - 2) + 1;
-			int direction = rand() % 4;
-			int dx = 0;
-			int dy = 0;
-
-			// in the first iteration force to use a wall as starting point
-			if (isFirst)
+			if (bFirstCorridor)
 			{
+				x = rand() % (xSize - 2) + 1;
+				y = rand() % (ySize - 2) + 1;
 				vecMaze[getIndex(x, y)] = FREE;
-				isFirst = false;
+				bFirstCorridor = false;
 			}
 			else
 			{
-				if (vecMaze[getIndex(x, y)] != FREE)
-					continue;
+				// select random block till a FREE one is choosen.
+				while (vecMaze[getIndex(x, y)] != FREE)
+				{
+					x = rand() % (xSize - 2) + 1;
+					y = rand() % (ySize - 2) + 1;
+				}
 			}
 
-			nIterations--;
-			
-			// if the selected block is FREE, calculate the next step according to the direction. 
-			if (direction == NORTH)      { dx = 0; dy = -1; }
-			else if (direction == WEST)  { dx = 1; dy = 0; }
+			// from the FREE selected block calculate the next step according to the direction. 
+			if (direction == NORTH) { dx = 0; dy = -1; }
+			else if (direction == WEST) { dx = 1; dy = 0; }
 			else if (direction == SOUTH) { dx = 0; dy = 1; }
-			else if (direction == EAST)  { dx = -1; dy = 0; }
+			else if (direction == EAST) { dx = -1; dy = 0; }
 
 			// try to create a corridor with a certain random length. start with the FREE selected block
 			// in a alredy existing corridor. this will lead to concatenated corridors
-			for (int c = 0; c < nlengthCorridor / 2 + rand() % (nlengthCorridor / 2); c++)
+			for (int c = 0; c < nLengthCorridor / 2 + rand() % (nLengthCorridor / 2); c++)
 			{
 				// navigate to the next block
 				x += dx;
@@ -191,39 +194,57 @@ public:
 
 				// hitting the border?
 				if (vecMaze[getIndex(x, y)] == BORDER)
+				{
+					nTries++; 
 					break;
+				}
 
 				// do not get in contact with already FREE blocks (other corridors)
 				if (direction == NORTH || direction == SOUTH)
 				{
-					if (vecMaze[getIndex(x, y + dy)] != FREE
+					if (vecMaze[getIndex(x, y)] != FREE
+						&& vecMaze[getIndex(x, y + dy)] != FREE
 						&& vecMaze[getIndex(x - 1, y + dy)] != FREE
 						&& vecMaze[getIndex(x + 1, y + dy)] != FREE
 						&& vecMaze[getIndex(x - 1, y)] != FREE
 						&& vecMaze[getIndex(x + 1, y)] != FREE)
+					{
 						vecMaze[getIndex(x, y)] = FREE;
+						nCurrentLengthCorridor++;
+					}
 					else
+					{
+						nTries++;
 						break;
+					}
 				}
 				else if (direction == WEST || direction == EAST)
 				{
-					if (vecMaze[getIndex(x + dx, y)] != FREE
+					if (vecMaze[getIndex(x, y)] != FREE
+						&& vecMaze[getIndex(x + dx, y)] != FREE
 						&& vecMaze[getIndex(x + dx, y - 1)] != FREE
 						&& vecMaze[getIndex(x + dx, y + 1)] != FREE
 						&& vecMaze[getIndex(x, y - 1)] != FREE
 						&& vecMaze[getIndex(x, y + 1)] != FREE)
+					{
 						vecMaze[getIndex(x, y)] = FREE;
+						nCurrentLengthCorridor++;
+					}
 					else
+					{
+						nTries++;
 						break;
+					}
 				}
 			}
 		}
+	}
 
-		// create loops in the maze. therefore more than one solution exists.
-		int i = (int)sqrt(xSize * ySize);
-		while (i > 0)
+public:
+	void connectCorridors()
+	{
+		for (int i = 0; i < xSize * ySize; i++)
 		{
-			i--;
 			int x = rand() % (xSize - 2) + 1;
 			int y = rand() % (ySize - 2) + 1;
 
@@ -232,42 +253,46 @@ public:
 				&& vecMaze[getIndex(x, y + 1)] == vecMaze[getIndex(x, y - 1)])
 			{
 				if (vecMaze[getIndex(x + 1, y)] != vecMaze[getIndex(x, y + 1)])
+				{
 					vecMaze[getIndex(x, y)] = FREE;
+					break;
+				}
+
 			}
 		}
-		
-		// create rooms
-		for (int i = 0; i < sqrt(xSize * ySize) / 4; i++)
+	}
+
+public:
+	void createRoom()
+	{
+		int xp = rand() % (xSize - 2) + 1;
+		int yp = rand() % (ySize - 2) + 1;
+		int xWidth = 3 + rand() % (xSize / 5);
+		int yHeight = 3 + rand() % (ySize / 5);
+
+		if (xp + xWidth <= xSize - 1 && yp + yHeight <= ySize - 1)
 		{
-			int xp = rand() % (xSize - 2) + 1;
-			int yp = rand() % (ySize - 2) + 1;
-			int xWidth = 3 + rand() % (xSize/5);
-			int yHeight = 3 + rand() % (ySize/5);
-
-			if (xp + xWidth > xSize - 1 || yp + yHeight > ySize - 1)
-				continue;
-
 			for (int x = xp; x < xp + xWidth; x++)
 			{
 				for (int y = yp; y < yp + yHeight; y++)
 				{
-					if (vecMaze[getIndex(x, y)] != BORDER)
+					if (vecMaze[getIndex(x, y)] != BORDER && vecMaze[getIndex(x, y)] != END)
 						vecMaze[getIndex(x, y)] = FREE;
 				}
 			}
 		}
+	}
 
-		// set randomly some areas with WALL2 blocktype
-		for (int i = 0; i < sqrt(xSize * ySize) / 2; i++)
+public:
+	void createWall2()
+	{
+		int xp = rand() % (xSize - 2) + 1;
+		int yp = rand() % (ySize - 2) + 1;
+		int xWidth = 3 + rand() % (xSize / 5);
+		int yHeight = 3 + rand() % (ySize / 5);
+
+		if (xp + xWidth <= xSize - 1 && yp + yHeight <= ySize - 1)
 		{
-			int xp = rand() % (xSize - 2) + 1;
-			int yp = rand() % (ySize - 2) + 1;
-			int xWidth = 3 + rand() % (xSize / 5);
-			int yHeight = 3 + rand() % (ySize / 5);
-
-			if (xp + xWidth > xSize - 1 || yp + yHeight > ySize - 1)
-				continue;
-
 			for (int x = xp; x < xp + xWidth; x++)
 			{
 				for (int y = yp; y < yp + yHeight; y++)
@@ -277,8 +302,11 @@ public:
 				}
 			}
 		}
-		
-		// set end point
+	}
+
+public:
+	void createEnd()
+	{
 		while (true)
 		{
 			int x = rand() % (xSize - 2) + 1;
@@ -290,6 +318,30 @@ public:
 				break;
 			}
 		}
+	}
+
+// ----- create random maze
+// ------------------------
+public:
+	void createRandomMaze(int nLC)
+	{
+		srand((int)time(0));
+		initMaze();
+
+		// create corridors
+		for (int i = 0; i < xSize * ySize; i++)
+			createCorridor(nLC);
+		// create loops in the maze. therefore more than one solution exists.
+		for (int i = 0; i < sqrt(xSize * ySize); i++)
+			connectCorridors();
+		// create rooms
+		for (int i = 0; i < sqrt(xSize * ySize) / 4; i++)
+			createRoom();
+		// set randomly some areas with WALL2 blocktype
+		for (int i = 0; i < sqrt(xSize * ySize) / 2; i++)
+			createWall2();
+		// set end point
+		createEnd();
 	}
 
 public:
@@ -314,7 +366,7 @@ public:
 public:
 	void drawGrid(olc::PixelGameEngine *engine)
 	{
-		engine->FillRect(0, 0, xDraw, yDraw, olc::YELLOW);
+		// engine->FillRect(0, 0, xDraw, yDraw, olc::YELLOW);
 		for (int x = 0; x < xSize; x++)
 		{
 			for (int y = 0; y < ySize; y++)
@@ -655,8 +707,8 @@ public:
 private:
 	int nlengthCorridor = 100;
 	int nTries = 50000;
-	int nMazeWidth = 40;
-	int nMazeHeight = 45;
+	int nMazeWidth = 10;
+	int nMazeHeight = 10;
 	cMaze maze = cMaze(nMazeWidth, nMazeHeight);
 	cPlayer user = cPlayer(&maze);
 	float fAngle = 0;
@@ -688,14 +740,16 @@ public:
 	{
 		FillRect(0, 0, 1699, 899, olc::YELLOW);
 		{
-			int deltaX = 1100;
+			int deltaX = 900;
 			int deltaY = 720;
 			DrawString(deltaX, deltaY, "[A][S][D][W][I][P]  move", olc::BLACK, 2);
-			DrawString(deltaX, deltaY + 20, "Mouse               move", olc::BLACK, 2);
-			DrawString(deltaX, deltaY + 40, "[M]                 toggle draw 2D", olc::BLACK, 2);
-			DrawString(deltaX, deltaY + 60, "[O]                 distance to end", olc::BLACK, 2);
-			DrawString(deltaX, deltaY + 80, "[X][Y][V]           grow maze", olc::BLACK, 2);
-			DrawString(deltaX, deltaY + 100, "[B]                 shrink maze", olc::BLACK, 2);
+			DrawString(deltaX, deltaY + 20, "Mouse                  move", olc::BLACK, 2);
+			DrawString(deltaX, deltaY + 40, "[M]                     toggle draw 2D", olc::BLACK, 2);
+			DrawString(deltaX, deltaY + 60, "[O]                     distance to end", olc::BLACK, 2);
+			DrawString(deltaX, deltaY + 80, "[X][Y][V]               grow maze", olc::BLACK, 2);
+			DrawString(deltaX, deltaY + 100, "[B]                     shrink maze", olc::BLACK, 2);
+			DrawString(deltaX, deltaY + 120, "[1], [2], [3], [4]      init, corridor, loop, room", olc::BLACK, 2);
+
 		}
 		maze.createRandomMaze(nlengthCorridor);
 		user.setRandomPosition();
@@ -870,7 +924,60 @@ public:
 			user.replayPath3D(this, &maze);
 		}
 
-		// only draw 3d if user interaction occured
+		// ----- create maze step by step
+		// ------------------------------
+		// create new maze
+		if (GetKey(olc::Key::K1).bReleased)
+		{
+			maze.initMaze();
+			maze.createCorridor(10);
+			user.setRandomPosition();
+			user.draw3D(this, &maze);
+			maze.draw(this);
+			user.draw2D(this);
+			drawParams();
+			drawBGandString(this, 12, 2, to_string(maze.getRatio()), olc::BLUE);
+			maze.drawGrid(this);
+		}
+
+		// create corridor
+		if (GetKey(olc::Key::K2).bReleased)
+		{
+			maze.createCorridor(10);
+			user.draw3D(this, &maze);
+			maze.draw(this);
+			user.draw2D(this);
+			drawParams();
+			drawBGandString(this, 12, 2, to_string(maze.getRatio()), olc::BLUE);
+			maze.drawGrid(this);
+		}
+
+		// connect corridors (create loop)
+		if (GetKey(olc::Key::K3).bReleased)
+		{
+			maze.connectCorridors();
+			user.draw3D(this, &maze);
+			maze.draw(this);
+			user.draw2D(this);
+			drawParams();
+			drawBGandString(this, 12, 2, to_string(maze.getRatio()), olc::BLUE);
+			maze.drawGrid(this);
+		}
+
+		// create room
+		if (GetKey(olc::Key::K4).bReleased)
+		{
+			maze.createRoom();
+			user.draw3D(this, &maze);
+			maze.draw(this);
+			user.draw2D(this);
+			drawParams();
+			drawBGandString(this, 12, 2, to_string(maze.getRatio()), olc::BLUE);
+			maze.drawGrid(this);
+		}
+
+		// ----- only draw 3d if user interaction occured
+		// ----------------------------------------------
 		if (bUserInteraction)
 		{
 			user.draw3D(this, &maze);
