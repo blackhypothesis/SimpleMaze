@@ -159,7 +159,7 @@ public:
 		int nTries = 0;
 
 		// try nTries times to crate a corridor which is at least 1 block long. 
-		while (nCurrentLengthCorridor < 1 && nTries < xSize * ySize)
+		while (nCurrentLengthCorridor < 1 && nTries < xSize * ySize / 10)
 		{
 			if (bFirstCorridor)
 			{
@@ -330,9 +330,14 @@ public:
 
 		// create corridors
 		for (int i = 0; i < xSize * ySize; i++)
+		{
 			createCorridor(nLC);
+			// if ratio > 0.49, most of the possible corridors are crated
+			if (getRatio() > 0.49f)
+				break;
+		}
 		// create loops in the maze. therefore more than one solution exists.
-		for (int i = 0; i < sqrt(xSize * ySize); i++)
+		for (int i = 0; i < xSize + ySize; i++)
 			connectCorridors();
 		// create rooms
 		for (int i = 0; i < sqrt(xSize * ySize) / 4; i++)
@@ -366,7 +371,7 @@ public:
 public:
 	void drawGrid(olc::PixelGameEngine *engine)
 	{
-		// engine->FillRect(0, 0, xDraw, yDraw, olc::YELLOW);
+		engine->FillRect(0, 0, xDraw, yDraw, olc::YELLOW);
 		for (int x = 0; x < xSize; x++)
 		{
 			for (int y = 0; y < ySize; y++)
@@ -706,9 +711,8 @@ public:
 
 private:
 	int nlengthCorridor = 100;
-	int nTries = 50000;
-	int nMazeWidth = 10;
-	int nMazeHeight = 10;
+	int nMazeWidth = 30;
+	int nMazeHeight = 30;
 	cMaze maze = cMaze(nMazeWidth, nMazeHeight);
 	cPlayer user = cPlayer(&maze);
 	float fAngle = 0;
@@ -798,7 +802,6 @@ public:
 			nMazeHeight += 10;
 			nMazeWidth += 10;
 			maze = cMaze(nMazeWidth, nMazeHeight);
-			maze.createRandomMaze(nlengthCorridor);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
 			maze.drawGrid(this);
@@ -817,7 +820,6 @@ public:
 			if (nMazeHeight < 5) { nMazeHeight = 5; }
 			if (nMazeWidth < 5) { nMazeWidth = 5; }
 			maze = cMaze(nMazeWidth, nMazeHeight);
-			maze.createRandomMaze(nlengthCorridor);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
 			maze.drawGrid(this);
@@ -833,7 +835,6 @@ public:
 			bDraw2D = false;
 			nMazeWidth++;
 			maze = cMaze(nMazeWidth, nMazeHeight);
-			maze.createRandomMaze(nlengthCorridor);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
 			maze.drawGrid(this);
@@ -849,7 +850,6 @@ public:
 			bDraw2D = false;
 			nMazeHeight++;
 			maze = cMaze(nMazeWidth, nMazeHeight);
-			maze.createRandomMaze(nlengthCorridor);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
 			maze.drawGrid(this);
@@ -937,7 +937,6 @@ public:
 			user.draw2D(this);
 			drawParams();
 			drawBGandString(this, 12, 2, to_string(maze.getRatio()), olc::BLUE);
-			maze.drawGrid(this);
 		}
 
 		// create corridor
@@ -949,7 +948,6 @@ public:
 			user.draw2D(this);
 			drawParams();
 			drawBGandString(this, 12, 2, to_string(maze.getRatio()), olc::BLUE);
-			maze.drawGrid(this);
 		}
 
 		// connect corridors (create loop)
@@ -961,7 +959,6 @@ public:
 			user.draw2D(this);
 			drawParams();
 			drawBGandString(this, 12, 2, to_string(maze.getRatio()), olc::BLUE);
-			maze.drawGrid(this);
 		}
 
 		// create room
@@ -973,7 +970,17 @@ public:
 			user.draw2D(this);
 			drawParams();
 			drawBGandString(this, 12, 2, to_string(maze.getRatio()), olc::BLUE);
-			maze.drawGrid(this);
+		}
+
+		// create WALL2
+		if (GetKey(olc::Key::K5).bReleased)
+		{
+			maze.createWall2();
+			user.draw3D(this, &maze);
+			maze.draw(this);
+			user.draw2D(this);
+			drawParams();
+			drawBGandString(this, 12, 2, to_string(maze.getRatio()), olc::BLUE);
 		}
 
 		// ----- only draw 3d if user interaction occured
