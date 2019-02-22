@@ -157,7 +157,7 @@ public:
 		int direction = rand() % 4;
 		int nCurrentLengthCorridor = 0;
 		int nTries = 0;
-
+		
 		// try nTries times to crate a corridor which is at least 1 block long. 
 		while (nCurrentLengthCorridor < 1 && nTries < xSize * ySize / 10)
 		{
@@ -184,9 +184,13 @@ public:
 			else if (direction == SOUTH) { dx = 0; dy = 1; }
 			else if (direction == EAST) { dx = -1; dy = 0; }
 
+			// save starting point - used to check if an existing corridor will be enlarged
+			int xStart = x;
+			int yStart = y;
+
 			// try to create a corridor with a certain random length. start with the FREE selected block
 			// in a alredy existing corridor. this will lead to concatenated corridors
-			for (int c = 0; c < nLengthCorridor / 2 + rand() % (nLengthCorridor / 2); c++)
+			for (int c = 0; c < nLengthCorridor / 2 + (rand() % (nLengthCorridor / 2)); c++)
 			{
 				// navigate to the next block
 				x += dx;
@@ -209,8 +213,18 @@ public:
 						&& vecMaze[getIndex(x - 1, y)] != FREE
 						&& vecMaze[getIndex(x + 1, y)] != FREE)
 					{
-						vecMaze[getIndex(x, y)] = FREE;
-						nCurrentLengthCorridor++;
+						// do not enlarge an existing corridor every time, instead make a change of direction
+						if (vecMaze[getIndex(xStart, yStart - dy)] != FREE 
+							|| (vecMaze[getIndex(xStart, yStart - dy)] == FREE && (rand() % 10000 == 0)))
+						{
+							vecMaze[getIndex(x, y)] = FREE;
+							nCurrentLengthCorridor++;
+						}
+						else
+						{
+							nTries++;
+							break;
+						}
 					}
 					else
 					{
@@ -235,6 +249,24 @@ public:
 						nTries++;
 						break;
 					}
+
+					// do not enlarge an existing corridor every time, instead make a change of direction
+					if (vecMaze[getIndex(xStart - dx, yStart)] != FREE
+						|| (vecMaze[getIndex(xStart - dx, yStart)] == FREE && (rand() % 10000 == 0)))
+					{
+						vecMaze[getIndex(x, y)] = FREE;
+						nCurrentLengthCorridor++;
+					}
+					else
+					{
+						nTries++;
+						break;
+					}
+				}
+				else
+				{
+					nTries++;
+					break;
 				}
 			}
 		}
@@ -337,13 +369,13 @@ public:
 				break;
 		}
 		// create loops in the maze. therefore more than one solution exists.
-		for (int i = 0; i < xSize + ySize; i++)
+		for (int i = 0; i < sqrt(xSize * ySize) / 8; i++)
 			connectCorridors();
 		// create rooms
 		for (int i = 0; i < sqrt(xSize * ySize) / 4; i++)
 			createRoom();
 		// set randomly some areas with WALL2 blocktype
-		for (int i = 0; i < sqrt(xSize * ySize) / 2; i++)
+		for (int i = 0; i < sqrt(xSize * ySize) / 4; i++)
 			createWall2();
 		// set end point
 		createEnd();
@@ -710,7 +742,7 @@ public:
 	}
 
 private:
-	int nlengthCorridor = 100;
+	int nLengthCorridor = 100;
 	int nMazeWidth = 30;
 	int nMazeHeight = 30;
 	cMaze maze = cMaze(nMazeWidth, nMazeHeight);
@@ -755,7 +787,7 @@ public:
 			DrawString(deltaX, deltaY + 120, "[1], [2], [3], [4]      init, corridor, loop, room", olc::BLACK, 2);
 
 		}
-		maze.createRandomMaze(nlengthCorridor);
+		maze.createRandomMaze(nLengthCorridor);
 		user.setRandomPosition();
 		user.draw3D(this, &maze);
 		maze.drawGrid(this);
@@ -786,7 +818,7 @@ public:
 		if (GetKey(olc::Key::N).bReleased)
 		{
 			bDraw2D = false;
-			maze.createRandomMaze(nlengthCorridor);
+			maze.createRandomMaze(nLengthCorridor);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
 			maze.drawGrid(this);
@@ -930,7 +962,7 @@ public:
 		if (GetKey(olc::Key::K1).bReleased)
 		{
 			maze.initMaze();
-			maze.createCorridor(10);
+			maze.createCorridor(nLengthCorridor);
 			user.setRandomPosition();
 			user.draw3D(this, &maze);
 			maze.draw(this);
@@ -942,7 +974,7 @@ public:
 		// create corridor
 		if (GetKey(olc::Key::K2).bReleased)
 		{
-			maze.createCorridor(10);
+			maze.createCorridor(nLengthCorridor);
 			user.draw3D(this, &maze);
 			maze.draw(this);
 			user.draw2D(this);
@@ -976,6 +1008,19 @@ public:
 		if (GetKey(olc::Key::K5).bReleased)
 		{
 			maze.createWall2();
+			user.draw3D(this, &maze);
+			maze.draw(this);
+			user.draw2D(this);
+			drawParams();
+			drawBGandString(this, 12, 2, to_string(maze.getRatio()), olc::BLUE);
+		}
+
+		// create n corridors
+		if (GetKey(olc::Key::K6).bReleased)
+		{
+			for (int i = 0; i < 10; i ++)
+				maze.createCorridor(nLengthCorridor);
+
 			user.draw3D(this, &maze);
 			maze.draw(this);
 			user.draw2D(this);
