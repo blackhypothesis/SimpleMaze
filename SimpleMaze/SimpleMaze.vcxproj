@@ -115,10 +115,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="cMaze.h" />
+    <ClInclude Include="Block.h" />
+    <ClInclude Include="Location.h" />
+    <ClInclude Include="Maze.h" />
+    <ClInclude Include="MazeGame.h" />
     <ClInclude Include="olcPixelGameEngine.h" />
+    <ClInclude Include="Player.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Block.cpp" />
+    <ClCompile Include="Location.cpp" />
+    <ClCompile Include="Maze.cpp" />
+    <ClCompile Include="Mazegame.cpp" />
+    <ClCompile Include="olcPixelGameEngine.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="SimpleMaze.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
