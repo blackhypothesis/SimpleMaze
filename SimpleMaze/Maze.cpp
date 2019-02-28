@@ -114,6 +114,7 @@ void Maze::initMaze()
 	{
 		for (int y = 0; y < ySize; y++)
 		{
+			vecMaze[getIndex(x, y)]->setVisited(false);
 			if (x == 0 || x == xSize - 1 || y == 0 || y == ySize - 1)
 				vecMaze[getIndex(x, y)]->setBlockType(Block::BORDER);
 			else
@@ -392,7 +393,7 @@ bool Maze::isFree(int x, int y)
 	}
 }
 
-void Maze::drawGrid(olc::PixelGameEngine *engine)
+void Maze::drawGrid(olc::PixelGameEngine* engine)
 {
 	engine->FillRect(0, 0, xDraw, yDraw, olc::YELLOW);
 	for (int x = 0; x < xSize; x++)
@@ -431,6 +432,26 @@ void Maze::draw2D(olc::PixelGameEngine *engine)
 				engine->FillRect(x * getBlockSize(), y * getBlockSize(), getBlockSize(), getBlockSize(), floorColor);
 				engine->FillCircle(x * getBlockSize() + getBlockSize() / 2, y * getBlockSize() + getBlockSize() / 2, getBlockSize() / 2, olc::GREEN);
 			}
+		}
+	}
+}
+
+
+void Maze::draw2DVisited(olc::PixelGameEngine* engine)
+{
+	// drawGrid(engine);
+	for (int x = 0; x < xSize; x++)
+	{
+		for (int y = 0; y < ySize; y++)
+		{
+			if (vecMaze[getIndex(x, y)]->getBlockType() == Block::BORDER && vecMaze[getIndex(x, y)]->getVisited())
+				engine->FillRect(x * getBlockSize(), y * getBlockSize(), getBlockSize(), getBlockSize(), olc::DARK_GREY);
+			else if (vecMaze[getIndex(x, y)]->getBlockType() == Block::WALL1 && vecMaze[getIndex(x, y)]->getVisited())
+				engine->FillRect(x * getBlockSize(), y * getBlockSize(), getBlockSize(), getBlockSize(), olc::DARK_RED);
+			else if (vecMaze[getIndex(x, y)]->getBlockType() == Block::WALL2 && vecMaze[getIndex(x, y)]->getVisited())
+				engine->FillRect(x * getBlockSize(), y * getBlockSize(), getBlockSize(), getBlockSize(), olc::DARK_BLUE);
+			else if (vecMaze[getIndex(x, y)]->getBlockType() == Block::FREE && vecMaze[getIndex(x, y)]->getVisited())
+				engine->FillRect(x * getBlockSize(), y * getBlockSize(), getBlockSize(), getBlockSize(), floorColor);
 		}
 	}
 }

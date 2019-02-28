@@ -6,6 +6,7 @@ MazeGame::MazeGame() : player(&maze)
 {
 	sAppName = "Simple Maze";
 
+	nLengthCorridor = 50;
 	nMazeWidth = 20;
 	nMazeHeight = 24;
 	maze = Maze(nMazeWidth, nMazeHeight);
@@ -43,12 +44,12 @@ void MazeGame::drawParams()
 {
 	drawBGandString(this, 0, 0, std::to_string(maze.getXSize()), olc::DARK_GREY);
 	drawBGandString(this, 0, 1, std::to_string(maze.getYSize()), olc::DARK_GREY);
-	//drawBGandString(this, 4, 0, std::to_string(player.getPos().x), olc::BLUE);
-	//drawBGandString(this, 4, 1, std::to_string(player.getPos().y), olc::BLUE);
+	drawBGandString(this, 4, 0, std::to_string(player.getPos().getX()), olc::BLUE);
+	drawBGandString(this, 4, 1, std::to_string(player.getPos().getY()), olc::BLUE);
 	//drawBGandString(this, 8, 0, to_string(maze.getEnd().x), olc::GREEN);
 	//drawBGandString(this, 8, 1, to_string(maze.getEnd().y), olc::GREEN);
 	drawBGandString(this, 0, 2, std::to_string(fDistanceToEnd), olc::BLACK);
-	//drawBGandString(this, 0, 3, std::to_string(std::floor((player.getPathLength() * 100) + .5) / 100), olc::BLACK);
+	drawBGandString(this, 0, 3, std::to_string(std::floor((player.getPathLength() * 100) + .5) / 100), olc::BLACK);
 	drawBGandString(this, 12, 0, std::to_string(mouseX), olc::BLACK);
 	drawBGandString(this, 12, 1, std::to_string(mouseY), olc::BLACK);
 }
@@ -70,13 +71,9 @@ bool MazeGame::OnUserCreate()
 	}
 
 	maze.createRandomMaze(nLengthCorridor);
-	maze.draw2D(this);
-	drawParams();
-
-	maze.createRandomMaze(nLengthCorridor);
 	player.setRandomPosition();
 	player.draw3D(this, &maze);
-	//maze.drawGrid(this);
+	maze.drawGrid(this);
 	player.draw2D(this);
 	drawParams();
 	drawBGandString(this, 12, 2, std::to_string(maze.getRatio()), olc::BLUE);
@@ -319,6 +316,8 @@ bool MazeGame::OnUserUpdate(float fElapsedTime)
 	if (bPlayerInteraction)
 	{
 		player.draw3D(this, &maze);
+
+		maze.draw2DVisited(this);
 		player.draw2D(this);
 
 		// draw player angle

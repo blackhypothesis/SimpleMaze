@@ -10,6 +10,7 @@ Player::Player(Maze *m) : maze(m)
 	fyPos = (float)p.getY() + 0.5f;
 	vecPath.clear();
 	vecPath.push_back({ fxPos, fyPos });
+	setVisited(maze);
 	fxPosOld = fxPos;
 	fyPosOld = fyPos;
 	fxVec = cosf(fAngle);
@@ -83,6 +84,7 @@ void Player::move(float fDistance)
 	if (fxPos != fxPosOld || fyPos != fyPosOld)
 	{
 		vecPath.push_back({ fxPos, fyPos, fAngle });
+		setVisited(maze);
 	}
 }
 
@@ -126,6 +128,7 @@ void Player::moveSide(float fDistance, bool bDirection)
 	if (fxPos != fxPosOld || fyPos != fyPosOld)
 	{
 		vecPath.push_back({ fxPos, fyPos, fAngle });
+		setVisited(maze);
 	}
 }
 
@@ -145,6 +148,17 @@ bool Player::collisionDetection()
 		}
 	}
 	return false;
+}
+
+void Player::setVisited(Maze* maze)
+{
+	for (int x = (int)fxPos - 1; x < (int)fxPos + 2; x++)
+	{
+		for (int y = (int)fyPos - 1; y < (int)fyPos + 2; y++)
+		{
+			maze->getBlock(x, y)->setVisited(true);
+		}
+	}
 }
 
 
@@ -214,6 +228,9 @@ void Player::draw3D(olc::PixelGameEngine *engine, Maze *maze)
 				if (fStepSize < 0.01f)
 				{
 					bHitWall = true;
+
+					// set bVisited, just for test
+					maze->getBlock((int)nTestX, (int)nTestY)->setVisited(true);
 				}
 				else
 				{

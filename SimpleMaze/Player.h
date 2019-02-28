@@ -45,6 +45,7 @@ public:
 
 private:
 	bool collisionDetection();
+	void setVisited(Maze*);
 
 public:
 	void draw2DPath(olc::PixelGameEngine*);

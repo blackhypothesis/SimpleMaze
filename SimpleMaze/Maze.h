@@ -55,6 +55,7 @@ public:
 
 	void drawGrid(olc::PixelGameEngine*);	
 	void draw2D(olc::PixelGameEngine*);
+	void draw2DVisited(olc::PixelGameEngine*);
 
 };
 
