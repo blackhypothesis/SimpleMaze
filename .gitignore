@@ -259,3 +259,14 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/SimpleMaze/sfml-window-d-2.dll
+/SimpleMaze/sfml-window-2.dll
+/SimpleMaze/sfml-system-d-2.dll
+/SimpleMaze/sfml-system-2.dll
+/SimpleMaze/sfml-network-d-2.dll
+/SimpleMaze/sfml-network-2.dll
+/SimpleMaze/sfml-graphics-d-2.dll
+/SimpleMaze/sfml-graphics-2.dll
+/SimpleMaze/sfml-audio-d-2.dll
+/SimpleMaze/sfml-audio-2.dll
+/SimpleMaze/openal32.dll
