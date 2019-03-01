@@ -49,7 +49,7 @@ void MazeGame::drawParams()
 	//drawBGandString(this, 8, 0, to_string(maze.getEnd().x), olc::GREEN);
 	//drawBGandString(this, 8, 1, to_string(maze.getEnd().y), olc::GREEN);
 	drawBGandString(this, 0, 2, std::to_string(fDistanceToEnd), olc::BLACK);
-	drawBGandString(this, 0, 3, std::to_string(std::floor((player.getPathLength() * 100) + .5) / 100), olc::BLACK);
+	drawBGandString(this, 0, 3, std::to_string(player.getPathLength()), olc::BLACK);
 	drawBGandString(this, 12, 0, std::to_string(mouseX), olc::BLACK);
 	drawBGandString(this, 12, 1, std::to_string(mouseY), olc::BLACK);
 }

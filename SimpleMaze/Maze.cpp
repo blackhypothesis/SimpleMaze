@@ -262,10 +262,10 @@ void Maze::connectCorridors()
 		int y = rand() % (ySize - 2) + 1;
 
 		if (vecMaze[getIndex(x, y)]->getBlockType() == Block::WALL1
-			&& vecMaze[getIndex(x + 1, y)] == vecMaze[getIndex(x - 1, y)]
-			&& vecMaze[getIndex(x, y + 1)] == vecMaze[getIndex(x, y - 1)])
+			&& vecMaze[getIndex(x + 1, y)]->getBlockType() == vecMaze[getIndex(x - 1, y)]->getBlockType()
+			&& vecMaze[getIndex(x, y + 1)]->getBlockType() == vecMaze[getIndex(x, y - 1)]->getBlockType())
 		{
-			if (vecMaze[getIndex(x + 1, y)] != vecMaze[getIndex(x, y + 1)])
+			if (vecMaze[getIndex(x + 1, y)]->getBlockType() != vecMaze[getIndex(x, y + 1)]->getBlockType())
 			{
 				vecMaze[getIndex(x, y)]->setBlockType(Block::FREE);
 				break;

@@ -150,6 +150,7 @@ bool Player::collisionDetection()
 	return false;
 }
 
+/*
 void Player::setVisited(Maze* maze)
 {
 	for (int x = (int)fxPos - 1; x < (int)fxPos + 2; x++)
@@ -159,6 +160,12 @@ void Player::setVisited(Maze* maze)
 			maze->getBlock(x, y)->setVisited(true);
 		}
 	}
+}
+*/
+
+void Player::setVisited(Maze* maze)
+{
+	maze->getBlock((int)fxPos, (int)fyPos)->setVisited(true);
 }
 
 
@@ -223,13 +230,13 @@ void Player::draw3D(olc::PixelGameEngine *engine, Maze *maze)
 			nTestX = fxPos + fEyeX * fDistanceToWall;
 			nTestY = fyPos + fEyeY * fDistanceToWall;
 
-			if (maze->getBlockType((int)nTestX, (int)nTestY) != Block::FREE)
+			if (maze->getBlock((int)nTestX, (int)nTestY)->getBlockType() != Block::FREE)
 			{
 				if (fStepSize < 0.01f)
 				{
 					bHitWall = true;
 
-					// set bVisited, just for test
+					// set bVisited
 					maze->getBlock((int)nTestX, (int)nTestY)->setVisited(true);
 				}
 				else
@@ -240,12 +247,15 @@ void Player::draw3D(olc::PixelGameEngine *engine, Maze *maze)
 			}
 		}
 
-		int nShadow = 255 - (int)(fDistanceToWall * 15);
+		// calculate the distance using for drawing the maze, this is necessary to avoid fisheye effect.
+		float fDistance = fDistanceToWall * cosf(fAngle - fRayAngle);
+
+		int nShadow = 255 - (int)(fDistance * 15);
 		if (nShadow < 0)
 			nShadow = 0;
 		olc::Pixel pWall;
 
-		switch (maze->getBlockType(int(nTestX), int(nTestY))) {
+		switch (maze->getBlock(int(nTestX), int(nTestY))->getBlockType()) {
 		case Block::BORDER: pWall = olc::Pixel(nShadow / 2, nShadow / 2, nShadow / 2); break;
 		case Block::WALL1: pWall = olc::Pixel(nShadow, 0, 0); break;
 		case Block::WALL2: pWall = olc::Pixel(0, 0, nShadow); break;
@@ -261,7 +271,7 @@ void Player::draw3D(olc::PixelGameEngine *engine, Maze *maze)
 			|| 1 - nFractX < nStripe && nFractY < nStripe || 1 - nFractX < nStripe && 1 - nFractY < nStripe)
 			pWall = olc::Pixel(nShadow, nShadow, nShadow);
 
-		int nCeiling = (int)(nScreenHeight / 2.0f - nScreenHeight / fDistanceToWall);
+		int nCeiling = (int)(nScreenHeight / 2.0f - nScreenHeight / fDistance);
 		if (nCeiling < 0)
 			nCeiling = 0;
 		int nFloor = nScreenHeight - nCeiling;

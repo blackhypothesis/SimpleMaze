@@ -33,6 +33,7 @@ public:
 	const std::unique_ptr<Block>& getBlock(int, int) const;
 	int getIndex(int, int) const;
 	int getBlockSize() const;
+	// do not use it, use instead getBlock(int, int)->getBlockType()
 	Block::BlockType getBlockType(int x, int y) const;
 
 	float getRatio() const;
