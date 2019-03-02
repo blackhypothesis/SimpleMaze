@@ -285,3 +285,114 @@ void Player::draw3D(olc::PixelGameEngine *engine, Maze *maze)
 
 	}
 }
+
+
+void Player::draw3DSFML(sf::RenderWindow* window, Maze* maze)
+{
+	std::vector<sf::RectangleShape> vecRect;
+
+	int nScreenWidth = 860;
+	int nScreenHeight = 500;
+	int nXoffset = 820;
+	int nYoffset = 50;
+
+	// field of view pi/4 == 90 Degree
+	float fFOV = 3.14159f / 4.0f;
+
+	// maximum distance to do ray tracing
+	float fDepth = 30.0f;
+
+	for (int x = 0; x < nScreenWidth; x++)
+	{
+		// calculate the projected ray angle 
+		float fRayAngle = (fAngle - fFOV / 2.0f) + ((float)x / (float)nScreenWidth) * fFOV;
+		// find distance to wall
+		float fStepSize = 0.1f;
+		float fDistanceToWall = 0.0f;
+
+		bool bHitWall = false;
+		bool bBoundary = false;
+
+		float nTestX;
+		float nTestY;
+
+		float fEyeX = cosf(fRayAngle);
+		float fEyeY = sinf(fRayAngle);
+
+		while (!bHitWall && fDistanceToWall < fDepth)
+		{
+			fDistanceToWall += fStepSize;
+			nTestX = fxPos + fEyeX * fDistanceToWall;
+			nTestY = fyPos + fEyeY * fDistanceToWall;
+
+			if (maze->getBlock((int)nTestX, (int)nTestY)->getBlockType() != Block::FREE)
+			{
+				if (fStepSize < 0.01f)
+				{
+					bHitWall = true;
+
+					// set bVisited
+					maze->getBlock((int)nTestX, (int)nTestY)->setVisited(true);
+				}
+				else
+				{
+					fDistanceToWall -= fStepSize;
+					fStepSize *= 0.5f;
+				}
+			}
+		}
+
+		// calculate the distance using for drawing the maze, this is necessary to avoid fisheye effect.
+		float fDistance = fDistanceToWall * cosf(fAngle - fRayAngle);
+
+		int nShadow = 255 - (int)(fDistance * 15);
+		if (nShadow < 0)
+			nShadow = 0;
+
+		sf::Color wallColor;
+		switch (maze->getBlock(int(nTestX), int(nTestY))->getBlockType()) {
+		case Block::BORDER: wallColor = sf::Color(nShadow / 2, nShadow / 2, nShadow / 2); break;
+		case Block::WALL1: wallColor = sf::Color(nShadow, 0, 0); break;
+		case Block::WALL2: wallColor = sf::Color(0, 0, nShadow); break;
+		case Block::END: wallColor = sf::Color(0, nShadow, 0); break;
+		}
+
+
+
+		float nStripe = 0.02f;
+		// check if nTestX and nTestY are near an integer number
+		float nFractX = nTestX - (int)nTestX;
+		float nFractY = nTestY - (int)nTestY;
+		// if this is the case, draw a stripe
+		if (nFractX < nStripe && nFractY < nStripe || nFractX < nStripe && 1 - nFractY < nStripe
+			|| 1 - nFractX < nStripe && nFractY < nStripe || 1 - nFractX < nStripe && 1 - nFractY < nStripe)
+			wallColor = sf::Color(nShadow, nShadow, nShadow);
+
+		int nCeiling = (int)(nScreenHeight / 2.0f - nScreenHeight / fDistance);
+		if (nCeiling < 0)
+			nCeiling = 0;
+		int nFloor = nScreenHeight - nCeiling;
+
+
+		// ceiling
+		vecRect.push_back(sf::RectangleShape());
+		vecRect.back().setFillColor(sf::Color(0, 100, 200));
+		vecRect.back().setSize(sf::Vector2f{ 1.0f, (float)nCeiling });
+		vecRect.back().setPosition(sf::Vector2f{ (float)(x + nXoffset), (float)(nYoffset) });
+
+		// walls
+		vecRect.push_back(sf::RectangleShape());
+		vecRect.back().setFillColor(wallColor);
+		vecRect.back().setSize(sf::Vector2f{ 1.0f, (float)(nFloor - nCeiling) });
+		vecRect.back().setPosition(sf::Vector2f{ (float)(x + nXoffset), (float)(nYoffset + nCeiling) });
+
+		// floor
+		vecRect.push_back(sf::RectangleShape());
+		vecRect.back().setFillColor(sf::Color(0, 120, 64));
+		vecRect.back().setSize(sf::Vector2f{ 1.0f, (float)(nScreenHeight - nFloor) });
+		vecRect.back().setPosition(sf::Vector2f{ (float)(x + nXoffset), (float)(nYoffset + nFloor) });
+	}
+
+	for (auto v : vecRect)
+		window->draw(v);
+}

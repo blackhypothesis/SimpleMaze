@@ -51,5 +51,7 @@ public:
 	void draw2DPath(olc::PixelGameEngine*);
 	void draw2D(olc::PixelGameEngine*);
 	void draw3D(olc::PixelGameEngine*, Maze*);
+
+	void draw3DSFML(sf::RenderWindow*, Maze*);
 };
 

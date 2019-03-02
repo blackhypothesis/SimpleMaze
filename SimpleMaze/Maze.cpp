@@ -108,6 +108,7 @@ Location Maze::getEnd() const
 // ------------------------------
 void Maze::initMaze()
 {
+	getVec2DSFML();
 	bFirstCorridor = true;
 
 	for (int x = 0; x < xSize; x++)
@@ -333,6 +334,33 @@ void Maze::createEnd()
 	}
 }
 
+void Maze::getVec2DSFML()
+{
+	vecRect.clear();
+
+	for (int x = 0; x < xSize; x++)
+	{
+		for (int y = 0; y < ySize; y++)
+		{
+			vecRect.push_back(sf::RectangleShape());
+			vecRect.back().setSize(sf::Vector2f{ (float)getBlockSize(), (float)getBlockSize() });
+			vecRect.back().setPosition(sf::Vector2f{ (float)(x * getBlockSize()), (float)(y * getBlockSize()) });
+
+			if (vecMaze[getIndex(x, y)]->getBlockType() == Block::BORDER)
+				vecRect.back().setFillColor(sf::Color::Black);
+			else if (vecMaze[getIndex(x, y)]->getBlockType() == Block::WALL1)
+				vecRect.back().setFillColor(sf::Color::Red);
+			else if (vecMaze[getIndex(x, y)]->getBlockType() == Block::WALL2)
+				vecRect.back().setFillColor(sf::Color::Blue);
+			else if (vecMaze[getIndex(x, y)]->getBlockType() == Block::FREE)
+				vecRect.back().setFillColor(sf::Color::White);
+			else if (vecMaze[getIndex(x, y)]->getBlockType() == Block::START)
+				vecRect.back().setFillColor(sf::Color::Cyan);
+			else if (vecMaze[getIndex(x, y)]->getBlockType() == Block::END)
+				vecRect.back().setFillColor(sf::Color::Green);
+		}
+	}
+}
 
 Location Maze::getRandomFreeLocation()
 {
@@ -454,4 +482,10 @@ void Maze::draw2DVisited(olc::PixelGameEngine* engine)
 				engine->FillRect(x * getBlockSize(), y * getBlockSize(), getBlockSize(), getBlockSize(), floorColor);
 		}
 	}
+}
+
+void Maze::draw2DSFML(sf::RenderWindow* window)
+{
+	for (auto& v : vecRect)
+		window->draw(v);
 }

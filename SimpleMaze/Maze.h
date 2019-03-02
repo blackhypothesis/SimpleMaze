@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "olcPixelGameEngine.h"
+#include "SFML/Graphics.hpp"
 
 #include "Block.h"
 #include "Location.h"
@@ -24,6 +25,7 @@ private:
 	int xSize, ySize;
 	bool bFirstCorridor;
 	olc::Pixel floorColor;
+	std::vector<sf::RectangleShape> vecRect;
 
 public:
 	int getXSize() const;
@@ -48,6 +50,7 @@ public:
 	void createRoom();
 	void createWall2();
 	void createEnd();
+	void getVec2DSFML();
 
 	Location getRandomFreeLocation();
 
@@ -57,6 +60,8 @@ public:
 	void drawGrid(olc::PixelGameEngine*);	
 	void draw2D(olc::PixelGameEngine*);
 	void draw2DVisited(olc::PixelGameEngine*);
+
+	void draw2DSFML(sf::RenderWindow* window);
 
 };
 
